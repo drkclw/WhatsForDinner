@@ -114,7 +114,7 @@ As a user, I want to edit the details of my recipes so I can update names, descr
 - Single predefined user - no authentication or user management required for MVP
 - The 5 predefined recipes will be sample meal recipes (e.g., "Spaghetti Bolognese", "Grilled Chicken Salad", etc.)
 - "Current week" refers to a single week context without date-specific scheduling (recipes are planned for "this week" as a whole, not specific days)
-- **Data Persistence**: Browser local storage - data persists across sessions on the same device; no backend required
+- **Data Persistence**: PostgreSQL database via .NET 10 backend API - data persists across sessions and devices
 - Duplicate recipes in the same week are allowed (user may eat the same meal multiple times)
 - **Platform**: Web application (browser-based, responsive design) - works across desktop and mobile browsers
 
@@ -140,6 +140,6 @@ As a user, I want to edit the details of my recipes so I can update names, descr
 ### Session 2026-03-05
 
 - Q: What type of application should WhatsForDinner be? → A: Web application (browser-based, responsive design)
-- Q: How should the weekly meal plan data be persisted? → A: Browser local storage only (persists across sessions, single device)
+- Q: How should the weekly meal plan data be persisted? → A: PostgreSQL database via .NET 10 backend API (updated from initial local storage decision)
 - Q: What information should each recipe contain? → A: Name + description + ingredients list + cook time
 - Q: Should recipes be assigned to specific days? → A: Unordered list (bag of recipes for the week, no day assignment)
