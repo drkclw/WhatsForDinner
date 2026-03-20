@@ -49,7 +49,7 @@ dotnet restore
 # Run migrations
 dotnet ef database update
 
-# Start the API (runs on http://localhost:5000)
+# Start the API (runs on http://localhost:5140)
 dotnet run
 ```
 

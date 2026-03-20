@@ -10,7 +10,7 @@ This document describes the REST API contract for the WhatsForDinner backend.
 
 ## Base URL
 
-- **Development**: `http://localhost:5000/api`
+- **Development**: `http://localhost:5140/api`
 - **Production**: TBD
 
 ## Endpoints Summary

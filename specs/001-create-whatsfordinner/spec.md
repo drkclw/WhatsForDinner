@@ -104,7 +104,7 @@ As a user, I want to edit the details of my recipes so I can update names, descr
 - **FR-005**: System MUST add a selected recipe to the weekly plan when clicked from the available recipes list
 - **FR-006**: System MUST provide a "Remove" button/action for each recipe in the weekly plan
 - **FR-007**: System MUST remove a recipe from the weekly plan when the Remove action is triggered
-- **FR-008**: System MUST persist the weekly meal plan state during the application session
+- **FR-008**: System MUST persist the weekly meal plan state across sessions via PostgreSQL database
 - **FR-009**: System MUST include one predefined user with 5 different recipes pre-seeded
 - **FR-010**: System MUST allow users to edit recipe details (name, description, ingredients, cook time)
 - **FR-011**: System MUST display an appropriate empty state when no recipes are in the weekly plan
