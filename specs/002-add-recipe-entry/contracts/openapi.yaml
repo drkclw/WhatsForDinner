@@ -173,6 +173,12 @@ paths:
                 $ref: '#/components/schemas/Error'
         '413':
           description: File exceeds maximum size (10 MB)
+        '422':
+          description: Extraction failed or no recipe content could be identified in the image
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '502':
           description: Cloud AI service error
           content:
