@@ -328,7 +328,7 @@ components:
           example: "Lasagna noodles\nGround beef\nRicotta cheese\nMozzarella\nTomato sauce"
         cookTimeMinutes:
           type: integer
-          minimum: 1
+          minimum: 0
           nullable: true
           example: 60
 
