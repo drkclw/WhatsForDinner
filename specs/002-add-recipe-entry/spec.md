@@ -106,7 +106,7 @@ As a user, I want to delete a recipe from my inventory so that I can remove entr
 - **FR-012**: System MUST extract recipe information (name, description, ingredients, cook time) from uploaded images using a cloud AI vision API and pre-populate the recipe entry form with the results
 - **FR-013**: System MUST allow users to edit all pre-populated fields before saving an image-extracted recipe
 - **FR-014**: System MUST inform the user when recipe extraction from an image fails and offer alternatives (try another image or switch to manual entry)
-- **FR-015**: System MUST validate that cook time, when provided, is a positive number
+- **FR-015**: System MUST validate that cook time, when provided, is a non-negative number (0 or greater)
 - **FR-016**: System MUST display the newly added recipe in the user's recipe list after successful creation
 - **FR-017**: System MUST allow users to delete a recipe from their inventory with a confirmation prompt before permanent removal
 - **FR-018**: System MUST remove deleted recipes from any weekly plan entries that reference them
