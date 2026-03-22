@@ -32,26 +32,17 @@ public class RecipesControllerTests : IClassFixture<WebApplicationFactory<Progra
                 }
 
                 // Add in-memory database for testing
+                var dbName = "TestDb_Recipes_" + Guid.NewGuid();
                 services.AddDbContext<ApplicationDbContext>(options =>
                 {
-                    options.UseInMemoryDatabase("TestDb_Recipes_" + Guid.NewGuid());
+                    options.UseInMemoryDatabase(dbName);
                 });
 
-                // Build the service provider and seed data
+                // Build the service provider and ensure DB is created (seed data comes from entity configurations)
                 var sp = services.BuildServiceProvider();
                 using var scope = sp.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
                 db.Database.EnsureCreated();
-                
-                // Seed test data
-                var user = new User { Id = 1, Name = "Test User" };
-                db.Users.Add(user);
-
-                var recipe1 = new Recipe { Id = 1, UserId = 1, Name = "Spaghetti", CookTimeMinutes = 30 };
-                var recipe2 = new Recipe { Id = 2, UserId = 1, Name = "Salad", CookTimeMinutes = 15 };
-                db.Recipes.AddRange(recipe1, recipe2);
-
-                db.SaveChanges();
             });
         });
     }
@@ -137,5 +128,114 @@ public class RecipesControllerTests : IClassFixture<WebApplicationFactory<Progra
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // T015 - POST /api/recipes integration tests
+
+    [Fact]
+    public async Task CreateRecipe_ReturnsCreated_WhenValidRequest()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var createRequest = new RecipeCreateRequest
+        {
+            Name = "New Recipe",
+            Description = "A delicious new recipe",
+            Ingredients = "Flour\nSugar\nEggs",
+            CookTimeMinutes = 45
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/recipes", createRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        var result = await response.Content.ReadFromJsonAsync<RecipeDto>();
+        result.Should().NotBeNull();
+        result!.Name.Should().Be("New Recipe");
+        result.Description.Should().Be("A delicious new recipe");
+        result.Ingredients.Should().Be("Flour\nSugar\nEggs");
+        result.CookTimeMinutes.Should().Be(45);
+        result.Id.Should().BeGreaterThan(0);
+        response.Headers.Location.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task CreateRecipe_ReturnsBadRequest_WhenNameIsMissing()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var createRequest = new { Description = "No name provided" };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/recipes", createRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task CreateRecipe_ReturnsBadRequest_WhenCookTimeIsNegative()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var createRequest = new RecipeCreateRequest
+        {
+            Name = "Bad Recipe",
+            CookTimeMinutes = -5
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/recipes", createRequest);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    // T031 - DELETE /api/recipes/{id} integration tests
+
+    [Fact]
+    public async Task DeleteRecipe_ReturnsNoContent_WhenRecipeExists()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+
+        // Act
+        var response = await client.DeleteAsync("/api/recipes/2");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NoContent);
+    }
+
+    [Fact]
+    public async Task DeleteRecipe_ReturnsNotFound_WhenRecipeDoesNotExist()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+
+        // Act
+        var response = await client.DeleteAsync("/api/recipes/999");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    // T024 - POST /api/recipes/extract-from-image integration tests
+
+    [Fact]
+    public async Task ExtractFromImage_ReturnsBadRequest_WhenUnsupportedFormat()
+    {
+        // Arrange
+        var client = _factory.CreateClient();
+        var content = new MultipartFormDataContent();
+        var fileContent = new ByteArrayContent(new byte[] { 0x25, 0x50, 0x44, 0x46 }); // PDF magic bytes
+        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");
+        content.Add(fileContent, "file", "document.pdf");
+
+        // Act
+        var response = await client.PostAsync("/api/recipes/extract-from-image", content);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 }

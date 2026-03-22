@@ -26,11 +26,11 @@
 
 **Purpose**: Install new dependencies and configure shared services needed by multiple user stories
 
-- [ ] T001 Add `OpenAI` NuGet package (v2.x) to `backend/src/WhatsForDinner.Api/WhatsForDinner.Api.csproj`
-- [ ] T002 Add OpenAI configuration section to `backend/src/WhatsForDinner.Api/appsettings.json` and `backend/src/WhatsForDinner.Api/appsettings.Development.json` with `OpenAI:ApiKey` and `OpenAI:Model` (default `gpt-4o-mini`) settings
-- [ ] T003 [P] Create `RecipeCreateRequest` DTO record in `backend/src/WhatsForDinner.Api/Models/Dtos/RecipeCreateRequest.cs` with Name (required, max 200), Description (optional, max 1000), Ingredients (optional, max 2000), CookTimeMinutes (optional, ≥ 0) using DataAnnotations
-- [ ] T004 [P] Create `RecipeImageExtractResult` DTO record in `backend/src/WhatsForDinner.Api/Models/Dtos/RecipeImageExtractResult.cs` with Success (bool), Name, Description, Ingredients, CookTimeMinutes, Message fields per OpenAPI contract
-- [ ] T005 [P] Add `RecipeCreateRequest` and `RecipeImageExtractResult` TypeScript interfaces to `frontend/src/types/Recipe.ts`
+- [x] T001 Add `OpenAI` NuGet package (v2.x) to `backend/src/WhatsForDinner.Api/WhatsForDinner.Api.csproj`
+- [x] T002 Add OpenAI configuration section to `backend/src/WhatsForDinner.Api/appsettings.json` and `backend/src/WhatsForDinner.Api/appsettings.Development.json` with `OpenAI:ApiKey` and `OpenAI:Model` (default `gpt-4o-mini`) settings
+- [x] T003 [P] Create `RecipeCreateRequest` DTO record in `backend/src/WhatsForDinner.Api/Models/Dtos/RecipeCreateRequest.cs` with Name (required, max 200), Description (optional, max 1000), Ingredients (optional, max 2000), CookTimeMinutes (optional, ≥ 0) using DataAnnotations
+- [x] T004 [P] Create `RecipeImageExtractResult` DTO record in `backend/src/WhatsForDinner.Api/Models/Dtos/RecipeImageExtractResult.cs` with Success (bool), Name, Description, Ingredients, CookTimeMinutes, Message fields per OpenAPI contract
+- [x] T005 [P] Add `RecipeCreateRequest` and `RecipeImageExtractResult` TypeScript interfaces to `frontend/src/types/Recipe.ts`
 
 ---
 
@@ -40,15 +40,15 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T006 Add `CreateRecipeAsync(RecipeCreateRequest request, int userId)` and `DeleteRecipeAsync(int id, int userId)` method signatures to `backend/src/WhatsForDinner.Api/Services/IRecipeService.cs`
-- [ ] T007 Implement `CreateRecipeAsync` in `backend/src/WhatsForDinner.Api/Services/RecipeService.cs` — map DTO to Recipe entity, set UserId/CreatedAt/UpdatedAt, add to DbContext, save, return RecipeDto
-- [ ] T008 Implement `DeleteRecipeAsync` in `backend/src/WhatsForDinner.Api/Services/RecipeService.cs` — find recipe by id and userId, remove from DbContext (cascade handles WeeklyPlanItems), return bool for found/not-found
-- [ ] T009 [P] Create `IRecipeImageExtractor` interface in `backend/src/WhatsForDinner.Api/Services/IRecipeImageExtractor.cs` with `Task<RecipeImageExtractResult> ExtractFromImageAsync(byte[] imageData, string contentType)` method
-- [ ] T010 Implement `RecipeImageExtractor` in `backend/src/WhatsForDinner.Api/Services/RecipeImageExtractor.cs` — use OpenAI Chat Completions with `gpt-4o-mini`, send base64 image in multi-modal message, use Structured Outputs JSON schema for `{ name, description, ingredients, cookTimeMinutes }`, handle errors (missing API key → 503, invalid key → 502, timeout → 504, unreadable image → 422)
-- [ ] T011 Register `IRecipeImageExtractor`/`RecipeImageExtractor` as scoped service and `OpenAIClient` as singleton in `backend/src/WhatsForDinner.Api/Program.cs`
-- [ ] T012 [P] Add `postFormData<T>` method to `frontend/src/services/apiClient.ts` that sends `FormData` via fetch without setting `Content-Type` header (browser auto-sets with boundary)
-- [ ] T013 [P] Add `createRecipe`, `deleteRecipe`, and `extractFromImage` methods to `frontend/src/services/recipeService.ts` — createRecipe uses `apiClient.post`, deleteRecipe uses `apiClient.delete`, extractFromImage uses `apiClient.postFormData`
-- [ ] T014 Add `createRecipe` and `deleteRecipe` actions to `frontend/src/stores/recipeStore.ts` — createRecipe calls service and prepends to local recipes list, deleteRecipe calls service and removes from local list
+- [x] T006 Add `CreateRecipeAsync(RecipeCreateRequest request, int userId)` and `DeleteRecipeAsync(int id, int userId)` method signatures to `backend/src/WhatsForDinner.Api/Services/IRecipeService.cs`
+- [x] T007 Implement `CreateRecipeAsync` in `backend/src/WhatsForDinner.Api/Services/RecipeService.cs` — map DTO to Recipe entity, set UserId/CreatedAt/UpdatedAt, add to DbContext, save, return RecipeDto
+- [x] T008 Implement `DeleteRecipeAsync` in `backend/src/WhatsForDinner.Api/Services/RecipeService.cs` — find recipe by id and userId, remove from DbContext (cascade handles WeeklyPlanItems), return bool for found/not-found
+- [x] T009 [P] Create `IRecipeImageExtractor` interface in `backend/src/WhatsForDinner.Api/Services/IRecipeImageExtractor.cs` with `Task<RecipeImageExtractResult> ExtractFromImageAsync(byte[] imageData, string contentType)` method
+- [x] T010 Implement `RecipeImageExtractor` in `backend/src/WhatsForDinner.Api/Services/RecipeImageExtractor.cs` — use OpenAI Chat Completions with `gpt-4o-mini`, send base64 image in multi-modal message, use Structured Outputs JSON schema for `{ name, description, ingredients, cookTimeMinutes }`, handle errors (missing API key → 503, invalid key → 502, timeout → 504, unreadable image → 422)
+- [x] T011 Register `IRecipeImageExtractor`/`RecipeImageExtractor` as scoped service and `OpenAIClient` as singleton in `backend/src/WhatsForDinner.Api/Program.cs`
+- [x] T012 [P] Add `postFormData<T>` method to `frontend/src/services/apiClient.ts` that sends `FormData` via fetch without setting `Content-Type` header (browser auto-sets with boundary)
+- [x] T013 [P] Add `createRecipe`, `deleteRecipe`, and `extractFromImage` methods to `frontend/src/services/recipeService.ts` — createRecipe uses `apiClient.post`, deleteRecipe uses `apiClient.delete`, extractFromImage uses `apiClient.postFormData`
+- [x] T014 Add `createRecipe` and `deleteRecipe` actions to `frontend/src/stores/recipeStore.ts` — createRecipe calls service and prepends to local recipes list, deleteRecipe calls service and removes from local list
 
 **Checkpoint**: Foundation ready — all backend endpoints have service layer support, frontend has API client methods. User story implementation can now begin.
 
@@ -64,17 +64,17 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T015 [P] [US1] Integration test for `POST /api/recipes` in `backend/tests/WhatsForDinner.Api.Tests/Integration/RecipesControllerTests.cs` — test 201 on valid create, 400 on missing name, 400 on invalid cook time
-- [ ] T016 [P] [US1] Component test for `RecipeForm.vue` in `frontend/tests/unit/components/RecipeForm.spec.ts` — test name required validation, emit on submit, emit on cancel, pre-population via initialData prop
+- [x] T015 [P] [US1] Integration test for `POST /api/recipes` in `backend/tests/WhatsForDinner.Api.Tests/Integration/RecipesControllerTests.cs` — test 201 on valid create, 400 on missing name, 400 on invalid cook time
+- [x] T016 [P] [US1] Component test for `RecipeForm.vue` in `frontend/tests/unit/components/RecipeForm.spec.ts` — test name required validation, emit on submit, emit on cancel, pre-population via initialData prop
 
 ### Implementation for User Story 1
 
-- [ ] T017 [US1] Add `POST /api/recipes` endpoint to `backend/src/WhatsForDinner.Api/Controllers/RecipesController.cs` — accept `[FromBody] RecipeCreateRequest`, call `CreateRecipeAsync`, return 201 with created RecipeDto and `Location` header
-- [ ] T018 [P] [US1] Create `RecipeForm.vue` component in `frontend/src/components/RecipeForm.vue` — shared form for create/edit with fields: name (required), description (textarea), ingredients (textarea), cookTimeMinutes (number, min 0); emit `submit` with form data and `cancel` event; client-side validation (name required, cookTimeMinutes ≥ 0); support pre-population via `initialData` prop; WCAG 2.1 AA compliant labels and validation messages
-- [ ] T019 [US1] Create `RecipeCreateView.vue` in `frontend/src/views/RecipeCreateView.vue` — uses `RecipeForm.vue`, calls `recipeStore.createRecipe` on submit, shows success confirmation, navigates to recipe list on success, handles cancel by navigating back
-- [ ] T020 [US1] Add `/recipes/new` route to `frontend/src/router/index.ts` — lazy-loaded `RecipeCreateView.vue`, placed BEFORE `/recipes/:id/edit` to avoid route conflict
-- [ ] T021 [US1] Add "Add Recipe" button to `frontend/src/views/RecipeListView.vue` — navigates to `/recipes/new` via router-link
-- [ ] T022 [US1] Add "Add Recipe" button to `frontend/src/views/WeeklyPlanView.vue` — navigates to `/recipes/new` via router-link (per FR-001, add recipe accessible from both recipe list and weekly plan views)
+- [x] T017 [US1] Add `POST /api/recipes` endpoint to `backend/src/WhatsForDinner.Api/Controllers/RecipesController.cs` — accept `[FromBody] RecipeCreateRequest`, call `CreateRecipeAsync`, return 201 with created RecipeDto and `Location` header
+- [x] T018 [P] [US1] Create `RecipeForm.vue` component in `frontend/src/components/RecipeForm.vue` — shared form for create/edit with fields: name (required), description (textarea), ingredients (textarea), cookTimeMinutes (number, min 0); emit `submit` with form data and `cancel` event; client-side validation (name required, cookTimeMinutes ≥ 0); support pre-population via `initialData` prop; WCAG 2.1 AA compliant labels and validation messages
+- [x] T019 [US1] Create `RecipeCreateView.vue` in `frontend/src/views/RecipeCreateView.vue` — uses `RecipeForm.vue`, calls `recipeStore.createRecipe` on submit, shows success confirmation, navigates to recipe list on success, handles cancel by navigating back
+- [x] T020 [US1] Add `/recipes/new` route to `frontend/src/router/index.ts` — lazy-loaded `RecipeCreateView.vue`, placed BEFORE `/recipes/:id/edit` to avoid route conflict
+- [x] T021 [US1] Add "Add Recipe" button to `frontend/src/views/RecipeListView.vue` — navigates to `/recipes/new` via router-link
+- [x] T022 [US1] Add "Add Recipe" button to `frontend/src/views/WeeklyPlanView.vue` — navigates to `/recipes/new` via router-link (per FR-001, add recipe accessible from both recipe list and weekly plan views)
 
 **Checkpoint**: User Story 1 complete — users can manually add recipes via form from both views. Independently testable.
 
@@ -90,15 +90,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T023 [P] [US2] Unit test for `RecipeImageExtractor` in `backend/tests/WhatsForDinner.Api.Tests/Unit/RecipeImageExtractorTests.cs` — mock OpenAI client, test successful extraction returns populated result, test failure modes (missing API key → 503, invalid key → 502, timeout → 504, unreadable image → 422)
-- [ ] T024 [P] [US2] Integration test for `POST /api/recipes/extract-from-image` in `backend/tests/WhatsForDinner.Api.Tests/Integration/RecipesControllerTests.cs` — test 400 on unsupported format, 413 on oversize file, 200 on valid image with mocked extractor
-- [ ] T025 [P] [US2] Component test for `ImageUpload.vue` in `frontend/tests/unit/components/ImageUpload.spec.ts` — test file type validation rejects unsupported formats, size validation rejects >10 MB, preview renders on valid file, emits file-selected event
+- [x] T023 [P] [US2] Unit test for `RecipeImageExtractor` in `backend/tests/WhatsForDinner.Api.Tests/Unit/RecipeImageExtractorTests.cs` — mock OpenAI client, test successful extraction returns populated result, test failure modes (missing API key → 503, invalid key → 502, timeout → 504, unreadable image → 422)
+- [x] T024 [P] [US2] Integration test for `POST /api/recipes/extract-from-image` in `backend/tests/WhatsForDinner.Api.Tests/Integration/RecipesControllerTests.cs` — test 400 on unsupported format, 413 on oversize file, 200 on valid image with mocked extractor
+- [x] T025 [P] [US2] Component test for `ImageUpload.vue` in `frontend/tests/unit/components/ImageUpload.spec.ts` — test file type validation rejects unsupported formats, size validation rejects >10 MB, preview renders on valid file, emits file-selected event
 
 ### Implementation for User Story 2
 
-- [ ] T026 [US2] Add `POST /api/recipes/extract-from-image` endpoint to `backend/src/WhatsForDinner.Api/Controllers/RecipesController.cs` — accept `[FromForm] IFormFile file`, apply `[RequestSizeLimit(10_485_760)]`, validate Content-Type (JPEG/PNG/WebP) and magic bytes, convert to byte array, call `IRecipeImageExtractor.ExtractFromImageAsync`, return `RecipeImageExtractResult`; handle errors: unsupported format → 400, file too large → 413, extraction failure → 422, AI service errors → 502/503/504
-- [ ] T027 [US2] Create `ImageUpload.vue` component in `frontend/src/components/ImageUpload.vue` — file input accepting image/jpeg,image/png,image/webp; client-side validation for file type and size (10 MB max); image preview via `URL.createObjectURL` with cleanup in `onUnmounted`; drag-and-drop support as progressive enhancement; emit `file-selected` with File object; loading state prop; ARIA labels, `aria-live` for status, `aria-describedby` for errors
-- [ ] T028 [US2] Integrate `ImageUpload.vue` into `frontend/src/views/RecipeCreateView.vue` — add upload tab/section alongside manual entry; on file selected call `recipeService.extractFromImage`; show `LoadingSpinner` during extraction; on success pre-populate `RecipeForm` with extracted data; on failure show error message with options to try another image or switch to manual entry
+- [x] T026 [US2] Add `POST /api/recipes/extract-from-image` endpoint to `backend/src/WhatsForDinner.Api/Controllers/RecipesController.cs` — accept `[FromForm] IFormFile file`, apply `[RequestSizeLimit(10_485_760)]`, validate Content-Type (JPEG/PNG/WebP) and magic bytes, convert to byte array, call `IRecipeImageExtractor.ExtractFromImageAsync`, return `RecipeImageExtractResult`; handle errors: unsupported format → 400, file too large → 413, extraction failure → 422, AI service errors → 502/503/504
+- [x] T027 [US2] Create `ImageUpload.vue` component in `frontend/src/components/ImageUpload.vue` — file input accepting image/jpeg,image/png,image/webp; client-side validation for file type and size (10 MB max); image preview via `URL.createObjectURL` with cleanup in `onUnmounted`; drag-and-drop support as progressive enhancement; emit `file-selected` with File object; loading state prop; ARIA labels, `aria-live` for status, `aria-describedby` for errors
+- [x] T028 [US2] Integrate `ImageUpload.vue` into `frontend/src/views/RecipeCreateView.vue` — add upload tab/section alongside manual entry; on file selected call `recipeService.extractFromImage`; show `LoadingSpinner` during extraction; on success pre-populate `RecipeForm` with extracted data; on failure show error message with options to try another image or switch to manual entry
 
 **Checkpoint**: User Story 2 complete — users can add recipes via image upload. Independently testable.
 
@@ -112,8 +112,8 @@
 
 ### Implementation for User Story 3
 
-- [ ] T029 [US3] Enhance `RecipeForm.vue` in `frontend/src/components/RecipeForm.vue` — add visual indicator (e.g., subtle highlight or "AI extracted" badge) for pre-populated fields to distinguish from user-entered data; ensure all fields remain fully editable; handle partially extracted data (empty fields left blank for user input); add `source` prop ('manual' | 'extracted') to adjust UX messaging
-- [ ] T030 [US3] Add extraction status messaging in `frontend/src/views/RecipeCreateView.vue` — display informational message when form is pre-populated (e.g., "Review the extracted recipe details below and make any corrections before saving"); show which fields were successfully extracted vs. left empty
+- [x] T029 [US3] Enhance `RecipeForm.vue` in `frontend/src/components/RecipeForm.vue` — add visual indicator (e.g., subtle highlight or "AI extracted" badge) for pre-populated fields to distinguish from user-entered data; ensure all fields remain fully editable; handle partially extracted data (empty fields left blank for user input); add `source` prop ('manual' | 'extracted') to adjust UX messaging
+- [x] T030 [US3] Add extraction status messaging in `frontend/src/views/RecipeCreateView.vue` — display informational message when form is pre-populated (e.g., "Review the extracted recipe details below and make any corrections before saving"); show which fields were successfully extracted vs. left empty
 
 **Checkpoint**: User Story 3 complete — users can confidently review and edit extracted data before saving.
 
@@ -129,15 +129,15 @@
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T031 [P] [US4] Integration test for `DELETE /api/recipes/{id}` in `backend/tests/WhatsForDinner.Api.Tests/Integration/RecipesControllerTests.cs` — test 204 on successful delete, 404 on missing recipe, verify cascade removes WeeklyPlanItems
-- [ ] T032 [P] [US4] Component test for `ConfirmDialog.vue` in `frontend/tests/unit/components/ConfirmDialog.spec.ts` — test confirm emits confirm event, cancel emits cancel event, Escape key cancels, Enter key confirms, ARIA role="dialog" present
+- [x] T031 [P] [US4] Integration test for `DELETE /api/recipes/{id}` in `backend/tests/WhatsForDinner.Api.Tests/Integration/RecipesControllerTests.cs` — test 204 on successful delete, 404 on missing recipe, verify cascade removes WeeklyPlanItems
+- [x] T032 [P] [US4] Component test for `ConfirmDialog.vue` in `frontend/tests/unit/components/ConfirmDialog.spec.ts` — test confirm emits confirm event, cancel emits cancel event, Escape key cancels, Enter key confirms, ARIA role="dialog" present
 
 ### Implementation for User Story 4
 
-- [ ] T033 [US4] Add `DELETE /api/recipes/{id}` endpoint to `backend/src/WhatsForDinner.Api/Controllers/RecipesController.cs` — call `DeleteRecipeAsync`, return 204 on success or 404 if not found
-- [ ] T034 [P] [US4] Create `ConfirmDialog.vue` component in `frontend/src/components/ConfirmDialog.vue` — reusable modal with title, message, confirm/cancel buttons; emit `confirm` and `cancel` events; keyboard accessible (Escape to cancel, Enter to confirm); focus trap within dialog; ARIA role="dialog" and aria-modal
-- [ ] T035 [US4] Add delete functionality to `frontend/src/views/RecipeListView.vue` — add delete button to each recipe card/list item; on click show `ConfirmDialog`; on confirm call `recipeStore.deleteRecipe`; show success feedback; handle errors
-- [ ] T036 [US4] Refresh weekly plan store after recipe deletion in `frontend/src/stores/recipeStore.ts` — after successful delete, call `weeklyPlanStore.fetchWeeklyPlan()` to reflect cascade-removed plan items
+- [x] T033 [US4] Add `DELETE /api/recipes/{id}` endpoint to `backend/src/WhatsForDinner.Api/Controllers/RecipesController.cs` — call `DeleteRecipeAsync`, return 204 on success or 404 if not found
+- [x] T034 [P] [US4] Create `ConfirmDialog.vue` component in `frontend/src/components/ConfirmDialog.vue` — reusable modal with title, message, confirm/cancel buttons; emit `confirm` and `cancel` events; keyboard accessible (Escape to cancel, Enter to confirm); focus trap within dialog; ARIA role="dialog" and aria-modal
+- [x] T035 [US4] Add delete functionality to `frontend/src/views/RecipeListView.vue` — add delete button to each recipe card/list item; on click show `ConfirmDialog`; on confirm call `recipeStore.deleteRecipe`; show success feedback; handle errors
+- [x] T036 [US4] Refresh weekly plan store after recipe deletion in `frontend/src/stores/recipeStore.ts` — after successful delete, call `weeklyPlanStore.fetchWeeklyPlan()` to reflect cascade-removed plan items
 
 **Checkpoint**: User Story 4 complete — users can delete recipes with confirmation and cascade behavior.
 
@@ -147,10 +147,10 @@
 
 **Purpose**: Improvements that affect multiple user stories and final validation
 
-- [ ] T037 [P] E2E test for add-recipe flows in `frontend/tests/e2e/add-recipe.spec.ts` — manual entry happy path (fill form, submit, verify in list), image upload flow (upload, review, submit), delete with confirmation (delete, confirm, verify removed)
-- [ ] T038 [P] Update `backend/src/WhatsForDinner.Api/WhatsForDinner.Api.http` with example requests for POST create recipe, POST extract-from-image, and DELETE recipe endpoints
-- [ ] T039 [P] Refactor `RecipeEditView.vue` in `frontend/src/views/RecipeEditView.vue` to use the shared `RecipeForm.vue` component — replace inline form markup with RecipeForm component, pass existing recipe data via initialData prop (DRY — both create and edit use same form)
-- [ ] T040 Run quickstart.md validation — start backend and frontend, test all 4 flows: manual add, image upload add, review/edit extracted, delete recipe; verify API responses match OpenAPI contract
+- [x] T037 [P] E2E test for add-recipe flows in `frontend/tests/e2e/add-recipe.spec.ts` — manual entry happy path (fill form, submit, verify in list), image upload flow (upload, review, submit), delete with confirmation (delete, confirm, verify removed)
+- [x] T038 [P] Update `backend/src/WhatsForDinner.Api/WhatsForDinner.Api.http` with example requests for POST create recipe, POST extract-from-image, and DELETE recipe endpoints
+- [x] T039 [P] Refactor `RecipeEditView.vue` in `frontend/src/views/RecipeEditView.vue` to use the shared `RecipeForm.vue` component — replace inline form markup with RecipeForm component, pass existing recipe data via initialData prop (DRY — both create and edit use same form)
+- [x] T040 Run quickstart.md validation — start backend and frontend, test all 4 flows: manual add, image upload add, review/edit extracted, delete recipe; verify API responses match OpenAPI contract
 
 ---
 

@@ -77,5 +77,13 @@ export const apiClient = {
       }
     })
     return handleResponse<T>(response)
+  },
+
+  async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
+    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+      method: 'POST',
+      body: formData
+    })
+    return handleResponse<T>(response)
   }
 }

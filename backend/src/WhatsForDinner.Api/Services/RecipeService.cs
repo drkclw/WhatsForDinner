@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using WhatsForDinner.Api.Data;
+using WhatsForDinner.Api.Models;
 using WhatsForDinner.Api.Models.Dtos;
 
 namespace WhatsForDinner.Api.Services;
@@ -80,5 +81,48 @@ public class RecipeService : IRecipeService
             recipe.CreatedAt,
             recipe.UpdatedAt
         );
+    }
+
+    public async Task<RecipeDto> CreateRecipeAsync(RecipeCreateRequest request, int userId = 1)
+    {
+        var recipe = new Recipe
+        {
+            UserId = userId,
+            Name = request.Name,
+            Description = request.Description,
+            Ingredients = request.Ingredients,
+            CookTimeMinutes = request.CookTimeMinutes,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _context.Recipes.Add(recipe);
+        await _context.SaveChangesAsync();
+
+        return new RecipeDto(
+            recipe.Id,
+            recipe.Name,
+            recipe.Description,
+            recipe.Ingredients,
+            recipe.CookTimeMinutes,
+            recipe.CreatedAt,
+            recipe.UpdatedAt
+        );
+    }
+
+    public async Task<bool> DeleteRecipeAsync(int id, int userId = 1)
+    {
+        var recipe = await _context.Recipes
+            .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
+
+        if (recipe == null)
+        {
+            return false;
+        }
+
+        _context.Recipes.Remove(recipe);
+        await _context.SaveChangesAsync();
+
+        return true;
     }
 }

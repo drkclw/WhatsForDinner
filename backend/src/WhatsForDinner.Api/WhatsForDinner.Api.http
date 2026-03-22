@@ -4,3 +4,47 @@ GET {{WhatsForDinner.Api_HostAddress}}/weatherforecast/
 Accept: application/json
 
 ###
+
+# Get all recipes
+GET {{WhatsForDinner.Api_HostAddress}}/api/recipes
+Accept: application/json
+
+###
+
+# Get a single recipe
+GET {{WhatsForDinner.Api_HostAddress}}/api/recipes/1
+Accept: application/json
+
+###
+
+# Create a new recipe
+POST {{WhatsForDinner.Api_HostAddress}}/api/recipes
+Content-Type: application/json
+
+{
+  "name": "Spaghetti Carbonara",
+  "description": "Classic Italian pasta dish with eggs, cheese, and pancetta",
+  "ingredients": "400g spaghetti\n200g pancetta\n4 egg yolks\n100g Pecorino Romano\n50g Parmesan\nBlack pepper",
+  "cookTimeMinutes": 25
+}
+
+###
+
+# Extract recipe from image (multipart form upload)
+# Replace the file path with an actual image
+# POST {{WhatsForDinner.Api_HostAddress}}/api/recipes/extract-from-image
+# Content-Type: multipart/form-data; boundary=boundary
+#
+# --boundary
+# Content-Disposition: form-data; name="file"; filename="recipe.jpg"
+# Content-Type: image/jpeg
+#
+# < ./recipe.jpg
+# --boundary--
+
+###
+
+# Delete a recipe
+DELETE {{WhatsForDinner.Api_HostAddress}}/api/recipes/1
+
+###
