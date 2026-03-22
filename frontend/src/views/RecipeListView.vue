@@ -1,21 +1,65 @@
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useRecipeStore } from '@/stores/recipeStore'
 import RecipeCard from '@/components/RecipeCard.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import EmptyState from '@/components/EmptyState.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import ErrorNotification from '@/components/ErrorNotification.vue'
 
 const recipeStore = useRecipeStore()
+
+const showDeleteDialog = ref(false)
+const recipeToDelete = ref<{ id: number; name: string } | null>(null)
+const isDeleting = ref(false)
+const showSuccess = ref(false)
+const successMessage = ref('')
+const showError = ref(false)
+const errorMessage = ref('')
 
 onMounted(async () => {
   await recipeStore.fetchRecipes()
 })
+
+function confirmDelete(recipe: { id: number; name: string }) {
+  recipeToDelete.value = recipe
+  showDeleteDialog.value = true
+}
+
+async function handleDeleteConfirm() {
+  if (!recipeToDelete.value) return
+
+  isDeleting.value = true
+  const name = recipeToDelete.value.name
+  const success = await recipeStore.deleteRecipe(recipeToDelete.value.id)
+
+  isDeleting.value = false
+  showDeleteDialog.value = false
+  recipeToDelete.value = null
+
+  if (success) {
+    successMessage.value = `"${name}" has been deleted.`
+    showSuccess.value = true
+  } else {
+    errorMessage.value = recipeStore.error || 'Failed to delete recipe'
+    showError.value = true
+  }
+}
+
+function handleDeleteCancel() {
+  showDeleteDialog.value = false
+  recipeToDelete.value = null
+}
 </script>
 
 <template>
   <div class="recipe-list-view">
     <header class="page-header">
       <h1>All Recipes</h1>
+      <RouterLink to="/recipes/new" class="btn btn-primary" aria-label="Add a new recipe">
+        + Add Recipe
+      </RouterLink>
     </header>
 
     <LoadingSpinner v-if="recipeStore.isLoading" />
@@ -34,15 +78,46 @@ onMounted(async () => {
     />
 
     <div v-else class="recipe-grid" role="list" aria-label="Recipe list">
-      <RecipeCard
-        v-for="recipe in recipeStore.recipes"
-        :key="recipe.id"
-        :recipe="recipe"
-        :show-remove="false"
-        :show-edit="true"
-        role="listitem"
-      />
+      <div v-for="recipe in recipeStore.recipes" :key="recipe.id" class="recipe-card-wrapper" role="listitem">
+        <RecipeCard
+          :recipe="recipe"
+          :show-remove="false"
+          :show-edit="true"
+        />
+        <button
+          class="btn btn-danger btn-delete"
+          :aria-label="`Delete ${recipe.name}`"
+          @click="confirmDelete({ id: recipe.id, name: recipe.name })"
+        >
+          Delete
+        </button>
+      </div>
     </div>
+
+    <ConfirmDialog
+      :show="showDeleteDialog"
+      title="Delete Recipe"
+      :message="`Are you sure you want to delete &quot;${recipeToDelete?.name ?? ''}&quot;? This will also remove it from the weekly plan.`"
+      confirm-label="Delete"
+      cancel-label="Cancel"
+      @confirm="handleDeleteConfirm"
+      @cancel="handleDeleteCancel"
+    />
+
+    <ErrorNotification
+      :message="successMessage"
+      :show="showSuccess"
+      type="success"
+      :duration="3000"
+      @close="showSuccess = false"
+    />
+
+    <ErrorNotification
+      :message="errorMessage"
+      :show="showError"
+      type="error"
+      @close="showError = false"
+    />
   </div>
 </template>
 
@@ -53,6 +128,9 @@ onMounted(async () => {
 }
 
 .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: var(--spacing-lg);
 }
 
@@ -67,6 +145,16 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--spacing-md);
+}
+
+.recipe-card-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.btn-delete {
+  margin-top: var(--spacing-xs);
+  align-self: flex-end;
 }
 
 .error-message {

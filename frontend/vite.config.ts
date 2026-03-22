@@ -17,5 +17,10 @@ export default defineConfig({
         changeOrigin: true
       }
     }
+  },
+  test: {
+    environment: 'jsdom',
+    include: ['tests/unit/**/*.spec.ts'],
+    exclude: ['tests/e2e/**']
   }
 })

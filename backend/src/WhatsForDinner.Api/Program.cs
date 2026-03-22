@@ -12,6 +12,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Add services
 builder.Services.AddScoped<IWeeklyPlanService, WeeklyPlanService>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddScoped<IRecipeImageExtractor, RecipeImageExtractor>();
 
 // Add controllers
 builder.Services.AddControllers();

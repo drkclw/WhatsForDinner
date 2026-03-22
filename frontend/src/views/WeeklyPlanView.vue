@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import { useWeeklyPlanStore } from '@/stores/weeklyPlanStore'
 import { useRecipeStore } from '@/stores/recipeStore'
 import RecipeCard from '@/components/RecipeCard.vue'
@@ -40,14 +41,19 @@ async function handleRemoveRecipe(itemId: number) {
   <div class="weekly-plan-view">
     <header class="page-header">
       <h1>Weekly Meal Plan</h1>
-      <button 
-        class="btn btn-primary"
-        @click="openAddModal"
-        :disabled="weeklyPlanStore.isLoading"
-        aria-label="Add recipe to weekly plan"
-      >
-        + Add Recipe
-      </button>
+      <div class="header-actions">
+        <RouterLink to="/recipes/new" class="btn btn-secondary" aria-label="Add a new recipe">
+          + Add Recipe
+        </RouterLink>
+        <button 
+          class="btn btn-primary"
+          @click="openAddModal"
+          :disabled="weeklyPlanStore.isLoading"
+          aria-label="Add recipe to weekly plan"
+        >
+          + Add to Plan
+        </button>
+      </div>
     </header>
 
     <LoadingSpinner v-if="weeklyPlanStore.isLoading" />
@@ -100,6 +106,11 @@ async function handleRemoveRecipe(itemId: number) {
   justify-content: space-between;
   align-items: center;
   margin-bottom: var(--spacing-lg);
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--spacing-sm);
 }
 
 .page-header h1 {
