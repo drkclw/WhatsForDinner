@@ -52,7 +52,7 @@ A meal entry in a user's inventory. This feature adds creation and deletion capa
 - Name is required, must be non-empty, max 200 characters
 - Description is optional, max 1000 characters
 - Ingredients is optional, max 2000 characters
-- CookTimeMinutes must be a positive integer if provided (≥ 1)
+- CookTimeMinutes must be a non-negative integer if provided (≥ 0)
 - Duplicate names are allowed
 
 **State Transitions (new)**:

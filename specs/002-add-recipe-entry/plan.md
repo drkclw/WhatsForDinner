@@ -82,7 +82,7 @@ backend/
 │       ├── Models/
 │       │   └── Dtos/
 │       │       ├── RecipeCreateRequest.cs     # NEW: Create recipe DTO
-│       │       └── RecipeImageExtractResponse.cs # NEW: Extraction result DTO
+│       │       └── RecipeImageExtractResult.cs  # NEW: Extraction result DTO
 │       ├── Services/
 │       │   ├── IRecipeService.cs              # Add CreateRecipeAsync, DeleteRecipeAsync
 │       │   ├── RecipeService.cs               # Implement create, delete
