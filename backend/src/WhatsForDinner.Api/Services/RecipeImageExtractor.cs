@@ -43,7 +43,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                     "Set any field to null if it is not clearly visible in the image. " +
                     "Only return all nulls if the image contains no recipe information at all. " +
                     "Respond ONLY with valid JSON matching this schema: " +
-                    "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"cookTimeMinutes\": number|null}"
+                    "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"cookTimeMinutes\": integer|null}"
                 ),
                 new UserChatMessage(
                     ChatMessageContentPart.CreateTextPart("Extract recipe information from this image. Use only text and information visible in the image — do not infer or fabricate the recipe name."),
@@ -87,25 +87,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-            if (extracted == null || (string.IsNullOrWhiteSpace(extracted.Name) &&
-                string.IsNullOrWhiteSpace(extracted.Description) &&
-                string.IsNullOrWhiteSpace(extracted.Ingredients) &&
-                extracted.CookTimeMinutes == null))
-            {
-                return new RecipeImageExtractResult(
-                    Success: false,
-                    Message: "Could not extract recipe information from the image"
-                );
-            }
-
-            return new RecipeImageExtractResult(
-                Success: true,
-                Name: extracted.Name,
-                Description: extracted.Description,
-                Ingredients: extracted.Ingredients,
-                CookTimeMinutes: extracted.CookTimeMinutes,
-                Message: "Recipe extracted successfully"
-            );
+            return BuildResult(extracted);
         }
         catch (OperationCanceledException)
         {
@@ -132,7 +114,41 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         }
     }
 
-    private record ExtractedRecipe
+    internal static RecipeImageExtractResult BuildResult(ExtractedRecipe? extracted)
+    {
+        if (extracted == null)
+        {
+            return new RecipeImageExtractResult(
+                Success: false,
+                Message: "Could not extract recipe information from the image"
+            );
+        }
+
+        // Treat negative cook time as unreadable
+        var cookTime = extracted.CookTimeMinutes >= 0 ? extracted.CookTimeMinutes : null;
+
+        if (string.IsNullOrWhiteSpace(extracted.Name) &&
+            string.IsNullOrWhiteSpace(extracted.Description) &&
+            string.IsNullOrWhiteSpace(extracted.Ingredients) &&
+            cookTime == null)
+        {
+            return new RecipeImageExtractResult(
+                Success: false,
+                Message: "Could not extract recipe information from the image"
+            );
+        }
+
+        return new RecipeImageExtractResult(
+            Success: true,
+            Name: extracted.Name,
+            Description: extracted.Description,
+            Ingredients: extracted.Ingredients,
+            CookTimeMinutes: cookTime,
+            Message: "Recipe extracted successfully"
+        );
+    }
+
+    internal record ExtractedRecipe
     {
         public string? Name { get; init; }
         public string? Description { get; init; }
