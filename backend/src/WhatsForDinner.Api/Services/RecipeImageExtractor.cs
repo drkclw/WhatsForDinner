@@ -39,17 +39,18 @@ public class RecipeImageExtractor : IRecipeImageExtractor
             {
                 new SystemChatMessage(
                     "You are a recipe extraction assistant. Analyze the provided image and extract recipe information. " +
-                    "If the image contains a recipe, extract the name, description, ingredients, and cook time. " +
-                    "If the image does not contain a recipe or is unreadable, indicate failure. " +
+                    "Extract as much of the following as you can see in the image: name (exactly as it appears — do NOT infer or fabricate it), description, ingredients, and cook time. " +
+                    "Set any field to null if it is not clearly visible in the image. " +
+                    "Only return all nulls if the image contains no recipe information at all. " +
                     "Respond ONLY with valid JSON matching this schema: " +
                     "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"cookTimeMinutes\": number|null}"
                 ),
                 new UserChatMessage(
-                    ChatMessageContentPart.CreateTextPart("Extract recipe information from this image."),
+                    ChatMessageContentPart.CreateTextPart("Extract recipe information from this image. Use only text and information visible in the image — do not infer or fabricate the recipe name."),
                     ChatMessageContentPart.CreateImagePart(
                         new BinaryData(imageData),
                         mediaType,
-                        ChatImageDetailLevel.Low
+                        ChatImageDetailLevel.High
                     )
                 )
             };
@@ -86,7 +87,10 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-            if (extracted == null || string.IsNullOrWhiteSpace(extracted.Name))
+            if (extracted == null || (string.IsNullOrWhiteSpace(extracted.Name) &&
+                string.IsNullOrWhiteSpace(extracted.Description) &&
+                string.IsNullOrWhiteSpace(extracted.Ingredients) &&
+                extracted.CookTimeMinutes == null))
             {
                 return new RecipeImageExtractResult(
                     Success: false,
