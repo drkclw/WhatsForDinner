@@ -26,11 +26,22 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         }
 
         var model = _configuration["OpenAI:Model"] ?? "gpt-4o-mini";
+        var endpoint = _configuration["OpenAI:Endpoint"];
 
         try
         {
-            var client = new OpenAIClient(apiKey);
-            var chatClient = client.GetChatClient(model);
+            ChatClient chatClient;
+            if (!string.IsNullOrWhiteSpace(endpoint))
+            {
+                var clientOptions = new OpenAIClientOptions { Endpoint = new Uri(endpoint) };
+                var client = new OpenAIClient(new ApiKeyCredential(apiKey), clientOptions);
+                chatClient = client.GetChatClient(model);
+            }
+            else
+            {
+                var client = new OpenAIClient(new ApiKeyCredential(apiKey));
+                chatClient = client.GetChatClient(model);
+            }
 
             var base64Image = Convert.ToBase64String(imageData);
             var mediaType = contentType;
@@ -39,17 +50,18 @@ public class RecipeImageExtractor : IRecipeImageExtractor
             {
                 new SystemChatMessage(
                     "You are a recipe extraction assistant. Analyze the provided image and extract recipe information. " +
-                    "If the image contains a recipe, extract the name, description, ingredients, and cook time. " +
-                    "If the image does not contain a recipe or is unreadable, indicate failure. " +
+                    "Extract as much of the following as you can see in the image: name (exactly as it appears — do NOT infer or fabricate it), description, ingredients, and cook time. " +
+                    "Set any field to null if it is not clearly visible in the image. " +
+                    "Only return all nulls if the image contains no recipe information at all. " +
                     "Respond ONLY with valid JSON matching this schema: " +
-                    "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"cookTimeMinutes\": number|null}"
+                    "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"cookTimeMinutes\": integer|null}"
                 ),
                 new UserChatMessage(
-                    ChatMessageContentPart.CreateTextPart("Extract recipe information from this image."),
+                    ChatMessageContentPart.CreateTextPart("Extract recipe information from this image. Use only text and information visible in the image — do not infer or fabricate the recipe name."),
                     ChatMessageContentPart.CreateImagePart(
                         new BinaryData(imageData),
                         mediaType,
-                        ChatImageDetailLevel.Low
+                        ChatImageDetailLevel.High
                     )
                 )
             };
@@ -86,22 +98,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase
             });
 
-            if (extracted == null || string.IsNullOrWhiteSpace(extracted.Name))
-            {
-                return new RecipeImageExtractResult(
-                    Success: false,
-                    Message: "Could not extract recipe information from the image"
-                );
-            }
-
-            return new RecipeImageExtractResult(
-                Success: true,
-                Name: extracted.Name,
-                Description: extracted.Description,
-                Ingredients: extracted.Ingredients,
-                CookTimeMinutes: extracted.CookTimeMinutes,
-                Message: "Recipe extracted successfully"
-            );
+            return BuildResult(extracted);
         }
         catch (OperationCanceledException)
         {
@@ -128,7 +125,41 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         }
     }
 
-    private record ExtractedRecipe
+    internal static RecipeImageExtractResult BuildResult(ExtractedRecipe? extracted)
+    {
+        if (extracted == null)
+        {
+            return new RecipeImageExtractResult(
+                Success: false,
+                Message: "Could not extract recipe information from the image"
+            );
+        }
+
+        // Treat negative cook time as unreadable
+        var cookTime = extracted.CookTimeMinutes is >= 0 ? extracted.CookTimeMinutes : null;
+
+        if (string.IsNullOrWhiteSpace(extracted.Name) &&
+            string.IsNullOrWhiteSpace(extracted.Description) &&
+            string.IsNullOrWhiteSpace(extracted.Ingredients) &&
+            cookTime == null)
+        {
+            return new RecipeImageExtractResult(
+                Success: false,
+                Message: "Could not extract recipe information from the image"
+            );
+        }
+
+        return new RecipeImageExtractResult(
+            Success: true,
+            Name: extracted.Name,
+            Description: extracted.Description,
+            Ingredients: extracted.Ingredients,
+            CookTimeMinutes: cookTime,
+            Message: "Recipe extracted successfully"
+        );
+    }
+
+    internal record ExtractedRecipe
     {
         public string? Name { get; init; }
         public string? Description { get; init; }
