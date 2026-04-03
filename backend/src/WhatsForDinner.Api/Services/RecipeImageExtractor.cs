@@ -26,11 +26,22 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         }
 
         var model = _configuration["OpenAI:Model"] ?? "gpt-4o-mini";
+        var endpoint = _configuration["OpenAI:Endpoint"];
 
         try
         {
-            var client = new OpenAIClient(apiKey);
-            var chatClient = client.GetChatClient(model);
+            ChatClient chatClient;
+            if (!string.IsNullOrWhiteSpace(endpoint))
+            {
+                var clientOptions = new OpenAIClientOptions { Endpoint = new Uri(endpoint) };
+                var client = new OpenAIClient(new ApiKeyCredential(apiKey), clientOptions);
+                chatClient = client.GetChatClient(model);
+            }
+            else
+            {
+                var client = new OpenAIClient(new ApiKeyCredential(apiKey));
+                chatClient = client.GetChatClient(model);
+            }
 
             var base64Image = Convert.ToBase64String(imageData);
             var mediaType = contentType;
