@@ -125,7 +125,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         }
 
         // Treat negative cook time as unreadable
-        var cookTime = extracted.CookTimeMinutes >= 0 ? extracted.CookTimeMinutes : null;
+        var cookTime = extracted.CookTimeMinutes is >= 0 ? extracted.CookTimeMinutes : null;
 
         if (string.IsNullOrWhiteSpace(extracted.Name) &&
             string.IsNullOrWhiteSpace(extracted.Description) &&
