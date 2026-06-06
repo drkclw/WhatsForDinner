@@ -5,6 +5,7 @@ public record RecipeImageExtractResult(
     string? Name = null,
     string? Description = null,
     string? Ingredients = null,
+    string? Preparation = null,
     int? CookTimeMinutes = null,
     string? Message = null
 );

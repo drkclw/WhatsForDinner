@@ -100,6 +100,7 @@ public class WeeklyPlanService : IWeeklyPlanService
                 item.Recipe.Name,
                 item.Recipe.Description,
                 item.Recipe.Ingredients,
+                item.Recipe.Preparation,
                 item.Recipe.CookTimeMinutes,
                 item.Recipe.CreatedAt,
                 item.Recipe.UpdatedAt

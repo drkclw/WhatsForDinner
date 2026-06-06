@@ -17,7 +17,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         _logger = logger;
     }
 
-    public async Task<RecipeImageExtractResult> ExtractFromImageAsync(byte[] imageData, string contentType)
+    public async Task<RecipeImageExtractResult> ExtractFromImagesAsync(List<(byte[] Data, string ContentType)> images)
     {
         var apiKey = _configuration["OpenAI:ApiKey"];
         if (string.IsNullOrWhiteSpace(apiKey))
@@ -27,6 +27,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
 
         var model = _configuration["OpenAI:Model"] ?? "gpt-4o-mini";
         var endpoint = _configuration["OpenAI:Endpoint"];
+        var timeoutSeconds = _configuration.GetValue<int>("OpenAI:TimeoutSeconds", 90);
 
         try
         {
@@ -43,27 +44,32 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                 chatClient = client.GetChatClient(model);
             }
 
-            var base64Image = Convert.ToBase64String(imageData);
-            var mediaType = contentType;
+            var userMessageParts = new List<ChatMessageContentPart>
+            {
+                ChatMessageContentPart.CreateTextPart("Extract recipe information from the provided image(s). Use only text and information visible in the images — do not infer or fabricate the recipe name.")
+            };
+
+            foreach (var (data, contentType) in images)
+            {
+                userMessageParts.Add(ChatMessageContentPart.CreateImagePart(
+                    new BinaryData(data),
+                    contentType,
+                    ChatImageDetailLevel.High
+                ));
+            }
 
             var messages = new List<ChatMessage>
             {
                 new SystemChatMessage(
-                    "You are a recipe extraction assistant. Analyze the provided image and extract recipe information. " +
-                    "Extract as much of the following as you can see in the image: name (exactly as it appears — do NOT infer or fabricate it), description, ingredients, and cook time. " +
-                    "Set any field to null if it is not clearly visible in the image. " +
-                    "Only return all nulls if the image contains no recipe information at all. " +
+                    "You are a recipe extraction assistant. Analyze the provided image(s) and extract recipe information. " +
+                    "If multiple images are provided, they may show different parts of the same recipe — combine all visible information into a single result. " +
+                    "Extract as much of the following as you can see: name (exactly as it appears — do NOT infer or fabricate it), description, ingredients, preparation (cooking/baking instructions), and cook time. " +
+                    "Set any field to null if it is not clearly visible in any of the images. " +
+                    "Only return all nulls if the images contain no recipe information at all. " +
                     "Respond ONLY with valid JSON matching this schema: " +
-                    "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"cookTimeMinutes\": integer|null}"
+                    "{\"name\": string|null, \"description\": string|null, \"ingredients\": string|null, \"preparation\": string|null, \"cookTimeMinutes\": integer|null}"
                 ),
-                new UserChatMessage(
-                    ChatMessageContentPart.CreateTextPart("Extract recipe information from this image. Use only text and information visible in the image — do not infer or fabricate the recipe name."),
-                    ChatMessageContentPart.CreateImagePart(
-                        new BinaryData(imageData),
-                        mediaType,
-                        ChatImageDetailLevel.High
-                    )
-                )
+                new UserChatMessage(userMessageParts)
             };
 
             var options = new ChatCompletionOptions
@@ -77,9 +83,10 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                             "name": { "type": ["string", "null"] },
                             "description": { "type": ["string", "null"] },
                             "ingredients": { "type": ["string", "null"] },
+                            "preparation": { "type": ["string", "null"] },
                             "cookTimeMinutes": { "type": ["integer", "null"] }
                         },
-                        "required": ["name", "description", "ingredients", "cookTimeMinutes"],
+                        "required": ["name", "description", "ingredients", "preparation", "cookTimeMinutes"],
                         "additionalProperties": false
                     }
                     """),
@@ -87,7 +94,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
                 )
             };
 
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
             var completion = await chatClient.CompleteChatAsync(messages, options, cts.Token);
 
             var responseContent = completion.Value.Content[0].Text;
@@ -141,6 +148,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         if (string.IsNullOrWhiteSpace(extracted.Name) &&
             string.IsNullOrWhiteSpace(extracted.Description) &&
             string.IsNullOrWhiteSpace(extracted.Ingredients) &&
+            string.IsNullOrWhiteSpace(extracted.Preparation) &&
             cookTime == null)
         {
             return new RecipeImageExtractResult(
@@ -154,6 +162,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
             Name: extracted.Name,
             Description: extracted.Description,
             Ingredients: extracted.Ingredients,
+            Preparation: extracted.Preparation,
             CookTimeMinutes: cookTime,
             Message: "Recipe extracted successfully"
         );
@@ -164,6 +173,7 @@ public class RecipeImageExtractor : IRecipeImageExtractor
         public string? Name { get; init; }
         public string? Description { get; init; }
         public string? Ingredients { get; init; }
+        public string? Preparation { get; init; }
         public int? CookTimeMinutes { get; init; }
     }
 }

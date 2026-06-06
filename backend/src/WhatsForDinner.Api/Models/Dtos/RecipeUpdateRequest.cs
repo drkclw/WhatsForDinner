@@ -14,6 +14,9 @@ public record RecipeUpdateRequest
     [StringLength(2000)]
     public string? Ingredients { get; init; }
 
+    [StringLength(10000)]
+    public string? Preparation { get; init; }
+
     [Range(0, int.MaxValue)]
     public int? CookTimeMinutes { get; init; }
 }

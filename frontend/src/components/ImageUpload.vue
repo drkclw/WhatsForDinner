@@ -3,56 +3,99 @@ import { ref, onUnmounted } from 'vue'
 
 interface Props {
   isLoading?: boolean
+  loadingMessage?: string
 }
 
-withDefaults(defineProps<Props>(), {
-  isLoading: false
+const props = withDefaults(defineProps<Props>(), {
+  isLoading: false,
+  loadingMessage: 'Extracting recipe from image...'
 })
 
 const emit = defineEmits<{
-  'file-selected': [file: File]
+  'files-changed': [files: File[]]
+  'extract': []
 }>()
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_FILE_COUNT = 5
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 
-const previewUrl = ref<string | null>(null)
+interface UploadedFile {
+  file: File
+  previewUrl: string
+}
+
+const uploadedFiles = ref<UploadedFile[]>([])
 const errorMessage = ref<string | null>(null)
-const selectedFileName = ref<string | null>(null)
 const isDragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 function validateFile(file: File): string | null {
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return 'Unsupported file format. Please upload a JPEG, PNG, or WebP image.'
+    return `"${file.name}" is not a supported format. Please upload JPEG, PNG, or WebP images.`
   }
   if (file.size > MAX_FILE_SIZE) {
-    return 'File is too large. Maximum size is 10 MB.'
+    return `"${file.name}" is too large. Maximum size is 10 MB per image.`
   }
   return null
 }
 
-function handleFile(file: File) {
+function addFiles(newFiles: FileList | File[]) {
   errorMessage.value = null
-  cleanupPreview()
 
-  const validationError = validateFile(file)
-  if (validationError) {
-    errorMessage.value = validationError
+  const filesToAdd = Array.from(newFiles)
+  const remainingSlots = MAX_FILE_COUNT - uploadedFiles.value.length
+
+  if (filesToAdd.length > remainingSlots) {
+    if (remainingSlots === 0) {
+      errorMessage.value = `Maximum of ${MAX_FILE_COUNT} images allowed. Remove an image to add more.`
+      return
+    }
+    errorMessage.value = `Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} can be added (max ${MAX_FILE_COUNT}).`
     return
   }
 
-  selectedFileName.value = file.name
-  previewUrl.value = URL.createObjectURL(file)
-  emit('file-selected', file)
+  let anyValidAdded = false
+
+  for (const file of filesToAdd) {
+    const validationError = validateFile(file)
+    if (validationError) {
+      // Keep any previously selected valid images, and just skip invalid ones.
+      if (!errorMessage.value) errorMessage.value = validationError
+      continue
+    }
+
+    uploadedFiles.value.push({
+      file,
+      previewUrl: URL.createObjectURL(file)
+    })
+    anyValidAdded = true
+  }
+
+  if (anyValidAdded) {
+    emitFilesChanged()
+  }
+
+function removeFile(index: number) {
+  const removed = uploadedFiles.value.splice(index, 1)
+  if (removed[0]) {
+    URL.revokeObjectURL(removed[0].previewUrl)
+  }
+  errorMessage.value = null
+  emitFilesChanged()
+}
+
+function emitFilesChanged() {
+  emit('files-changed', uploadedFiles.value.map(u => u.file))
 }
 
 function handleFileChange(event: Event) {
   const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-  if (file) {
-    handleFile(file)
+  if (input.files && input.files.length > 0) {
+    addFiles(input.files)
   }
+  // Reset input so the same file can be re-selected
+  input.value = ''
 }
 
 function handleDragOver(event: DragEvent) {
@@ -67,9 +110,8 @@ function handleDragLeave() {
 function handleDrop(event: DragEvent) {
   event.preventDefault()
   isDragOver.value = false
-  const file = event.dataTransfer?.files[0]
-  if (file) {
-    handleFile(file)
+  if (event.dataTransfer?.files) {
+    addFiles(event.dataTransfer.files)
   }
 }
 
@@ -77,68 +119,116 @@ function triggerFileInput() {
   fileInputRef.value?.click()
 }
 
-function cleanupPreview() {
-  if (previewUrl.value) {
-    URL.revokeObjectURL(previewUrl.value)
-    previewUrl.value = null
+function handleExtract() {
+  emit('extract')
+}
+
+function cleanupAllPreviews() {
+  for (const uploaded of uploadedFiles.value) {
+    URL.revokeObjectURL(uploaded.previewUrl)
   }
-  selectedFileName.value = null
+  uploadedFiles.value = []
 }
 
 onUnmounted(() => {
-  cleanupPreview()
+  cleanupAllPreviews()
 })
 </script>
 
 <template>
   <div class="image-upload">
-    <div
-      class="upload-area"
-      :class="{ 'drag-over': isDragOver, 'has-error': errorMessage }"
-      @dragover="handleDragOver"
-      @dragleave="handleDragLeave"
-      @drop="handleDrop"
-      @click="triggerFileInput"
-      role="button"
-      tabindex="0"
-      @keydown.enter="triggerFileInput"
-      @keydown.space.prevent="triggerFileInput"
-      :aria-label="isLoading ? 'Processing image...' : 'Upload a recipe image'"
-    >
-      <input
-        ref="fileInputRef"
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        class="file-input"
-        aria-label="Upload a recipe image (JPEG, PNG, or WebP, max 10 MB)"
-        @change="handleFileChange"
-      />
-
-      <div v-if="isLoading" class="upload-loading">
-        <div class="spinner" aria-hidden="true"></div>
-        <span aria-live="polite">Extracting recipe from image...</span>
-      </div>
-
-      <div v-else-if="previewUrl" class="upload-preview">
-        <img :src="previewUrl" :alt="selectedFileName || 'Uploaded recipe image'" class="preview-image" />
-        <p class="preview-filename">{{ selectedFileName }}</p>
-      </div>
-
-      <div v-else class="upload-prompt">
-        <span class="upload-icon" aria-hidden="true">📷</span>
-        <p class="upload-text">
-          <strong>Click to upload</strong> or drag and drop
-        </p>
-        <p class="upload-hint">JPEG, PNG, or WebP (max 10 MB)</p>
-      </div>
+    <!-- Loading state -->
+    <div v-if="isLoading" class="upload-loading" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <span aria-live="polite">{{ loadingMessage }}</span>
     </div>
+
+    <template v-else>
+      <!-- Thumbnail grid when files are selected -->
+      <div v-if="uploadedFiles.length > 0" class="thumbnail-section">
+        <div class="thumbnail-grid" role="list" aria-label="Uploaded images">
+          <div
+            v-for="(uploaded, index) in uploadedFiles"
+            :key="index"
+            class="thumbnail-item"
+            role="listitem"
+          >
+            <img
+              :src="uploaded.previewUrl"
+              :alt="uploaded.file.name"
+              class="thumbnail-image"
+            />
+            <button
+              type="button"
+              class="thumbnail-remove"
+              :aria-label="`Remove image ${index + 1}`"
+              @click="removeFile(index)"
+            >
+              ✕
+            </button>
+            <p class="thumbnail-name">{{ uploaded.file.name }}</p>
+          </div>
+        </div>
+
+        <div class="upload-actions">
+          <button
+            v-if="uploadedFiles.length < MAX_FILE_COUNT"
+            type="button"
+            class="btn btn-secondary btn-sm"
+            @click="triggerFileInput"
+          >
+            + Add More
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary"
+            @click="handleExtract"
+          >
+            Extract Recipe
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty state: upload prompt -->
+      <div
+        v-else
+        class="upload-area"
+        :class="{ 'drag-over': isDragOver, 'has-error': !!errorMessage }"
+        @dragover="handleDragOver"
+        @dragleave="handleDragLeave"
+        @drop="handleDrop"
+        @click="triggerFileInput"
+        role="button"
+        tabindex="0"
+        @keydown.enter="triggerFileInput"
+        @keydown.space.prevent="triggerFileInput"
+        aria-label="Upload recipe images"
+      >
+        <div class="upload-prompt">
+          <span class="upload-icon" aria-hidden="true">📷</span>
+          <p class="upload-text">
+            <strong>Click to upload</strong> or drag and drop
+          </p>
+          <p class="upload-hint">JPEG, PNG, or WebP (max 10 MB each, up to 5 images)</p>
+        </div>
+      </div>
+    </template>
+
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      multiple
+      class="file-input"
+      aria-label="Upload recipe images (JPEG, PNG, or WebP, max 10 MB each)"
+      @change="handleFileChange"
+    />
 
     <div
       v-if="errorMessage"
       class="upload-error"
       role="alert"
       aria-live="assertive"
-      :id="'upload-error'"
     >
       {{ errorMessage }}
     </div>
@@ -214,24 +304,80 @@ onUnmounted(() => {
   margin: 0;
 }
 
-.upload-preview {
+.thumbnail-section {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.thumbnail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: var(--spacing-sm);
 }
 
-.preview-image {
-  max-width: 200px;
-  max-height: 200px;
-  border-radius: var(--radius-sm);
-  object-fit: cover;
+.thumbnail-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
-.preview-filename {
+.thumbnail-image {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  border: 1px solid var(--color-border);
+}
+
+.thumbnail-remove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--color-error, #d32f2f);
+  color: white;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  padding: 0;
+}
+
+.thumbnail-remove:hover,
+.thumbnail-remove:focus-visible {
+  background-color: #b71c1c;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.thumbnail-name {
+  font-size: 0.75rem;
   color: var(--color-text-secondary);
-  font-size: 0.875rem;
   margin: 0;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.upload-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+}
+
+.btn-sm {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  font-size: 0.875rem;
 }
 
 .upload-loading {
@@ -240,6 +386,7 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--spacing-sm);
   color: var(--color-text-secondary);
+  padding: var(--spacing-lg);
 }
 
 .upload-loading .spinner {

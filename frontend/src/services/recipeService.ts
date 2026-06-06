@@ -22,9 +22,11 @@ export const recipeService = {
     return apiClient.delete<void>(`/recipes/${id}`)
   },
 
-  async extractFromImage(file: File): Promise<RecipeImageExtractResult> {
+  async extractFromImage(files: File[]): Promise<RecipeImageExtractResult> {
     const formData = new FormData()
-    formData.append('file', file)
+    for (const file of files) {
+      formData.append('files', file)
+    }
     return apiClient.postFormData<RecipeImageExtractResult>('/recipes/extract-from-image', formData)
   }
 }

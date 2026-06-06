@@ -7,12 +7,13 @@ namespace WhatsForDinner.Api.Tests.Unit;
 
 public class RecipeImageExtractorTests
 {
-    private static RecipeImageExtractor CreateExtractor(string? apiKey = null, string model = "gpt-4o-mini")
+    private static RecipeImageExtractor CreateExtractor(string? apiKey = null, string model = "gpt-4o-mini", int timeoutSeconds = 90)
     {
         var configData = new Dictionary<string, string?>
         {
             ["OpenAI:ApiKey"] = apiKey ?? "",
-            ["OpenAI:Model"] = model
+            ["OpenAI:Model"] = model,
+            ["OpenAI:TimeoutSeconds"] = timeoutSeconds.ToString()
         };
         var configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(configData)
@@ -22,14 +23,17 @@ public class RecipeImageExtractorTests
     }
 
     [Fact]
-    public async Task ExtractFromImageAsync_ThrowsInvalidOperationException_WhenApiKeyMissing()
+    public async Task ExtractFromImagesAsync_ThrowsInvalidOperationException_WhenApiKeyMissing()
     {
         // Arrange
         var extractor = CreateExtractor(apiKey: "");
-        var imageData = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }; // Fake JPEG header
+        var images = new List<(byte[] Data, string ContentType)>
+        {
+            (new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }, "image/jpeg")
+        };
 
         // Act
-        Func<Task> act = () => extractor.ExtractFromImageAsync(imageData, "image/jpeg");
+        Func<Task> act = () => extractor.ExtractFromImagesAsync(images);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -37,14 +41,17 @@ public class RecipeImageExtractorTests
     }
 
     [Fact]
-    public async Task ExtractFromImageAsync_ThrowsInvalidOperationException_WhenApiKeyIsWhitespace()
+    public async Task ExtractFromImagesAsync_ThrowsInvalidOperationException_WhenApiKeyIsWhitespace()
     {
         // Arrange
         var extractor = CreateExtractor(apiKey: "   ");
-        var imageData = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 };
+        var images = new List<(byte[] Data, string ContentType)>
+        {
+            (new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }, "image/jpeg")
+        };
 
         // Act
-        Func<Task> act = () => extractor.ExtractFromImageAsync(imageData, "image/jpeg");
+        Func<Task> act = () => extractor.ExtractFromImagesAsync(images);
 
         // Assert
         await act.Should().ThrowAsync<InvalidOperationException>()
@@ -134,5 +141,62 @@ public class RecipeImageExtractorTests
 
         result.Success.Should().BeTrue();
         result.CookTimeMinutes.Should().BeNull();
+    }
+
+    [Fact]
+    public void BuildResult_ReturnsSuccess_WhenOnlyPreparationIsPresent()
+    {
+        var extracted = new RecipeImageExtractor.ExtractedRecipe { Preparation = "Preheat oven to 350F." };
+
+        var result = RecipeImageExtractor.BuildResult(extracted);
+
+        result.Success.Should().BeTrue();
+        result.Preparation.Should().Be("Preheat oven to 350F.");
+    }
+
+    [Fact]
+    public void BuildResult_ReturnsPreparation_WhenAllFieldsPresent()
+    {
+        var extracted = new RecipeImageExtractor.ExtractedRecipe
+        {
+            Name = "Pasta",
+            Description = "Italian classic",
+            Ingredients = "pasta, sauce",
+            Preparation = "Boil pasta. Add sauce.",
+            CookTimeMinutes = 20
+        };
+
+        var result = RecipeImageExtractor.BuildResult(extracted);
+
+        result.Success.Should().BeTrue();
+        result.Name.Should().Be("Pasta");
+        result.Preparation.Should().Be("Boil pasta. Add sauce.");
+        result.CookTimeMinutes.Should().Be(20);
+    }
+
+    [Fact]
+    public void BuildResult_ReturnsNullPreparation_WhenPreparationNotInImage()
+    {
+        var extracted = new RecipeImageExtractor.ExtractedRecipe
+        {
+            Name = "Salad",
+            Ingredients = "lettuce, tomato"
+        };
+
+        var result = RecipeImageExtractor.BuildResult(extracted);
+
+        result.Success.Should().BeTrue();
+        result.Preparation.Should().BeNull();
+    }
+
+    [Fact]
+    public void BuildResult_ReturnsFailure_WhenAllFieldsIncludingPreparationAreNull()
+    {
+        var extracted = new RecipeImageExtractor.ExtractedRecipe();
+
+        var result = RecipeImageExtractor.BuildResult(extracted);
+
+        result.Success.Should().BeFalse();
+        result.Preparation.Should().BeNull();
     }
 }
