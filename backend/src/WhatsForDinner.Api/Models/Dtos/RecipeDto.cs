@@ -5,6 +5,7 @@ public record RecipeDto(
     string Name,
     string? Description,
     string? Ingredients,
+    string? Preparation,
     int? CookTimeMinutes,
     DateTime CreatedAt,
     DateTime UpdatedAt

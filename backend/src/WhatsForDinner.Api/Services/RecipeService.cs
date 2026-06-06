@@ -24,6 +24,7 @@ public class RecipeService : IRecipeService
                 r.Name,
                 r.Description,
                 r.Ingredients,
+                r.Preparation,
                 r.CookTimeMinutes,
                 r.CreatedAt,
                 r.UpdatedAt
@@ -48,6 +49,7 @@ public class RecipeService : IRecipeService
             recipe.Name,
             recipe.Description,
             recipe.Ingredients,
+            recipe.Preparation,
             recipe.CookTimeMinutes,
             recipe.CreatedAt,
             recipe.UpdatedAt
@@ -67,6 +69,7 @@ public class RecipeService : IRecipeService
         recipe.Name = request.Name;
         recipe.Description = request.Description;
         recipe.Ingredients = request.Ingredients;
+        recipe.Preparation = request.Preparation;
         recipe.CookTimeMinutes = request.CookTimeMinutes;
         recipe.UpdatedAt = DateTime.UtcNow;
 
@@ -77,6 +80,7 @@ public class RecipeService : IRecipeService
             recipe.Name,
             recipe.Description,
             recipe.Ingredients,
+            recipe.Preparation,
             recipe.CookTimeMinutes,
             recipe.CreatedAt,
             recipe.UpdatedAt
@@ -91,6 +95,7 @@ public class RecipeService : IRecipeService
             Name = request.Name,
             Description = request.Description,
             Ingredients = request.Ingredients,
+            Preparation = request.Preparation,
             CookTimeMinutes = request.CookTimeMinutes,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -104,6 +109,7 @@ public class RecipeService : IRecipeService
             recipe.Name,
             recipe.Description,
             recipe.Ingredients,
+            recipe.Preparation,
             recipe.CookTimeMinutes,
             recipe.CreatedAt,
             recipe.UpdatedAt

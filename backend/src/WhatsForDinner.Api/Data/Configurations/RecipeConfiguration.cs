@@ -32,6 +32,10 @@ public class RecipeConfiguration : IEntityTypeConfiguration<Recipe>
             .HasColumnName("ingredients")
             .HasMaxLength(2000);
 
+        builder.Property(r => r.Preparation)
+            .HasColumnName("preparation")
+            .HasMaxLength(10000);
+
         builder.Property(r => r.CookTimeMinutes)
             .HasColumnName("cook_time_minutes");
 

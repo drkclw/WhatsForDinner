@@ -20,14 +20,25 @@ const activeTab = ref<'manual' | 'image'>('manual')
 const initialData = ref<Partial<RecipeCreateRequest> | null>(null)
 const formSource = ref<'manual' | 'extracted'>('manual')
 const extractionMessage = ref<string | null>(null)
+const selectedFiles = ref<File[]>([])
+const extractingLoadingMessage = ref('Extracting recipe from images...')
 
-async function handleFileSelected(file: File) {
+function handleFilesChanged(files: File[]) {
+  selectedFiles.value = files
+  showError.value = false
+}
+
+async function handleExtract() {
+  if (selectedFiles.value.length === 0) return
+
   isExtracting.value = true
   showError.value = false
   extractionMessage.value = null
+  const count = selectedFiles.value.length
+  extractingLoadingMessage.value = `Extracting from ${count} image${count === 1 ? '' : 's'}...`
 
   try {
-    const result: RecipeImageExtractResult = await recipeService.extractFromImage(file)
+    const result: RecipeImageExtractResult = await recipeService.extractFromImage(selectedFiles.value)
 
     if (result.success) {
       const extractedFieldNames: string[] = []
@@ -42,6 +53,9 @@ async function handleFileSelected(file: File) {
       if (result.ingredients) extractedFieldNames.push('Ingredients')
       else emptyFieldNames.push('Ingredients')
 
+      if (result.preparation) extractedFieldNames.push('Preparation')
+      else emptyFieldNames.push('Preparation')
+
       if (result.cookTimeMinutes != null) extractedFieldNames.push('Cook Time')
       else emptyFieldNames.push('Cook Time')
 
@@ -49,6 +63,7 @@ async function handleFileSelected(file: File) {
         name: result.name ?? '',
         description: result.description ?? null,
         ingredients: result.ingredients ?? null,
+        preparation: result.preparation ?? null,
         cookTimeMinutes: result.cookTimeMinutes ?? null
       }
       formSource.value = 'extracted'
@@ -140,7 +155,9 @@ function switchToManual() {
     <div v-if="activeTab === 'image'" class="image-upload-section" role="tabpanel">
       <ImageUpload
         :is-loading="isExtracting"
-        @file-selected="handleFileSelected"
+        :loading-message="extractingLoadingMessage"
+        @files-changed="handleFilesChanged"
+        @extract="handleExtract"
       />
       <div v-if="showError && activeTab === 'image'" class="error-fallback">
         <p>{{ errorMessage }}</p>

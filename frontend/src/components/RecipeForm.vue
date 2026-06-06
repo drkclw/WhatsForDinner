@@ -25,6 +25,7 @@ const form = ref<RecipeCreateRequest>({
   name: props.initialData?.name ?? '',
   description: props.initialData?.description ?? null,
   ingredients: props.initialData?.ingredients ?? null,
+  preparation: props.initialData?.preparation ?? null,
   cookTimeMinutes: props.initialData?.cookTimeMinutes ?? null
 })
 
@@ -35,6 +36,7 @@ const extractedFields = reactive<Record<string, boolean>>({
   name: false,
   description: false,
   ingredients: false,
+  preparation: false,
   cookTimeMinutes: false
 })
 
@@ -44,6 +46,7 @@ watch(() => props.initialData, (newData) => {
       name: newData.name ?? '',
       description: newData.description ?? null,
       ingredients: newData.ingredients ?? null,
+      preparation: newData.preparation ?? null,
       cookTimeMinutes: newData.cookTimeMinutes ?? null
     }
     // Mark extracted fields when source is 'extracted'
@@ -51,6 +54,7 @@ watch(() => props.initialData, (newData) => {
       extractedFields.name = !!newData.name
       extractedFields.description = !!newData.description
       extractedFields.ingredients = !!newData.ingredients
+      extractedFields.preparation = !!newData.preparation
       extractedFields.cookTimeMinutes = newData.cookTimeMinutes != null
     }
   }
@@ -73,6 +77,10 @@ function validateForm(): boolean {
     validationErrors.value.ingredients = 'Ingredients must be 2000 characters or less'
   }
 
+  if (form.value.preparation && form.value.preparation.length > 10000) {
+    validationErrors.value.preparation = 'Preparation must be 10,000 characters or less'
+  }
+
   if (form.value.cookTimeMinutes !== null && form.value.cookTimeMinutes !== undefined && form.value.cookTimeMinutes < 0) {
     validationErrors.value.cookTimeMinutes = 'Cook time must be 0 or greater'
   }
@@ -89,6 +97,7 @@ function handleSubmit() {
     name: form.value.name.trim(),
     description: form.value.description || null,
     ingredients: form.value.ingredients || null,
+    preparation: form.value.preparation || null,
     cookTimeMinutes: form.value.cookTimeMinutes ?? null
   })
 }
@@ -166,6 +175,27 @@ function handleCancel() {
       ></textarea>
       <span v-if="validationErrors.ingredients" id="ingredients-error" class="field-error" role="alert">
         {{ validationErrors.ingredients }}
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="preparation" class="form-label">
+        Preparation
+        <span v-if="extractedFields.preparation" class="ai-badge" aria-label="AI extracted">AI</span>
+      </label>
+      <textarea
+        id="preparation"
+        v-model="form.preparation"
+        class="form-input form-textarea"
+        :class="{ 'input-error': validationErrors.preparation, 'ai-populated': extractedFields.preparation }"
+        maxlength="10000"
+        rows="8"
+        placeholder="Enter cooking/baking instructions"
+        :aria-invalid="!!validationErrors.preparation"
+        :aria-describedby="validationErrors.preparation ? 'preparation-error' : undefined"
+      ></textarea>
+      <span v-if="validationErrors.preparation" id="preparation-error" class="field-error" role="alert">
+        {{ validationErrors.preparation }}
       </span>
     </div>
 

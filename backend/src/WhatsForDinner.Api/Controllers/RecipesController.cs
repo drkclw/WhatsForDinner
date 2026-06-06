@@ -96,10 +96,10 @@ public class RecipesController : ControllerBase
     }
 
     /// <summary>
-    /// Extract recipe data from an uploaded image
+    /// Extract recipe data from uploaded image(s)
     /// </summary>
     [HttpPost("extract-from-image")]
-    [RequestSizeLimit(10_485_760)]
+    [RequestSizeLimit(52_428_800)]
     [ProducesResponseType(typeof(RecipeImageExtractResult), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status413RequestEntityTooLarge)]
@@ -107,28 +107,48 @@ public class RecipesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status502BadGateway)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status503ServiceUnavailable)]
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status504GatewayTimeout)]
-    public async Task<ActionResult<RecipeImageExtractResult>> ExtractFromImage([FromForm] IFormFile file)
+    public async Task<ActionResult<RecipeImageExtractResult>> ExtractFromImage([FromForm] List<IFormFile> files)
     {
-        // Validate content type
-        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
-        if (!allowedTypes.Contains(file.ContentType.ToLower()))
+        if (files == null || files.Count == 0)
         {
-            return BadRequest(new ErrorResponse("Unsupported file format. Please upload a JPEG, PNG, or WebP image."));
+            return BadRequest(new ErrorResponse("At least one image file is required."));
         }
 
-        // Validate magic bytes
-        using var stream = new MemoryStream();
-        await file.CopyToAsync(stream);
-        var imageData = stream.ToArray();
-
-        if (!ValidateMagicBytes(imageData, file.ContentType))
+        if (files.Count > 5)
         {
-            return BadRequest(new ErrorResponse("File content does not match the expected image format."));
+            return BadRequest(new ErrorResponse("A maximum of 5 images can be uploaded at once."));
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp" };
+        var images = new List<(byte[] Data, string ContentType)>();
+
+        foreach (var file in files)
+        {
+            if (!allowedTypes.Contains(file.ContentType.ToLower()))
+            {
+                return BadRequest(new ErrorResponse($"Unsupported file format for '{file.FileName}'. Please upload JPEG, PNG, or WebP images."));
+            }
+
+            if (file.Length > 10_485_760)
+            {
+                return BadRequest(new ErrorResponse($"File '{file.FileName}' exceeds the 10 MB size limit."));
+            }
+
+            using var stream = new MemoryStream();
+            await file.CopyToAsync(stream);
+            var imageData = stream.ToArray();
+
+            if (!ValidateMagicBytes(imageData, file.ContentType))
+            {
+                return BadRequest(new ErrorResponse($"File '{file.FileName}' content does not match the expected image format."));
+            }
+
+            images.Add((imageData, file.ContentType));
         }
 
         try
         {
-            var result = await _imageExtractor.ExtractFromImageAsync(imageData, file.ContentType);
+            var result = await _imageExtractor.ExtractFromImagesAsync(images);
 
             if (!result.Success)
             {

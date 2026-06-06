@@ -22,6 +22,7 @@ const initialFormData = computed<Partial<RecipeCreateRequest> | null>(() => {
     name: recipeStore.currentRecipe.name,
     description: recipeStore.currentRecipe.description,
     ingredients: recipeStore.currentRecipe.ingredients,
+    preparation: recipeStore.currentRecipe.preparation,
     cookTimeMinutes: recipeStore.currentRecipe.cookTimeMinutes
   }
 })
@@ -38,6 +39,7 @@ async function handleSubmit(data: RecipeCreateRequest) {
     name: data.name,
     description: data.description,
     ingredients: data.ingredients,
+    preparation: data.preparation,
     cookTimeMinutes: data.cookTimeMinutes
   })
 
