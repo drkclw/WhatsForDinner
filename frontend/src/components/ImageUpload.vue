@@ -55,23 +55,26 @@ function addFiles(newFiles: FileList | File[]) {
     return
   }
 
+  let anyValidAdded = false
+
   for (const file of filesToAdd) {
     const validationError = validateFile(file)
     if (validationError) {
-      errorMessage.value = validationError
-      return
+      // Keep any previously selected valid images, and just skip invalid ones.
+      if (!errorMessage.value) errorMessage.value = validationError
+      continue
     }
-  }
 
-  for (const file of filesToAdd) {
     uploadedFiles.value.push({
       file,
       previewUrl: URL.createObjectURL(file)
     })
+    anyValidAdded = true
   }
 
-  emitFilesChanged()
-}
+  if (anyValidAdded) {
+    emitFilesChanged()
+  }
 
 function removeFile(index: number) {
   const removed = uploadedFiles.value.splice(index, 1)
