@@ -33,8 +33,6 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return undefined as T
   }
   
-  console.log('API response content type:', response.headers.get('Content-Type'));
-  console.log('API content', await response.clone().text());
   return response.json()
 }
 
