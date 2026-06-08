@@ -1,0 +1,392 @@
+openapi: 3.0.3
+info:
+  title: WhatsForDinner API - Google Authentication
+  description: New auth endpoints added by the google-auth-login feature
+  version: 4.0.0
+
+servers:
+  - url: http://localhost:5140/api
+    description: Development server
+
+paths:
+  /auth/google:
+    post:
+      summary: Sign in with Google
+      description: |
+        Verifies a Google ID token issued by Google Identity Services.
+        On success, creates or updates the user record and sets an httpOnly
+        session cookie. The cookie is valid for 30 days with sliding expiration.
+      operationId: signInWithGoogle
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GoogleSignInRequest'
+      responses:
+        '200':
+          description: Sign-in successful. Session cookie set.
+          headers:
+            Set-Cookie:
+              description: |
+                httpOnly, Secure, SameSite=Lax session cookie.
+                Name: `wfd_session`. Max-Age: 2592000 (30 days).
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUser'
+        '400':
+          description: Missing or malformed credential in request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Google ID token is invalid, expired, or has wrong audience.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/me:
+    get:
+      summary: Get current authenticated user
+      description: |
+        Returns the profile of the currently authenticated user based on the
+        session cookie. Called by the frontend on startup to restore session state.
+        Resets the session cookie's sliding expiration to now + 30 days.
+      operationId: getCurrentUser
+      tags:
+        - Authentication
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Session is valid. Returns current user profile.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthUser'
+        '401':
+          description: No valid session cookie present or session has expired.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/logout:
+    post:
+      summary: Sign out
+      description: |
+        Ends the current user session by clearing the session cookie.
+        Returns 200 regardless of whether a session was active.
+      operationId: signOut
+      tags:
+        - Authentication
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Signed out successfully. Session cookie cleared.
+          headers:
+            Set-Cookie:
+              description: Session cookie cleared (Max-Age=0).
+              schema:
+                type: string
+
+  /recipes:
+    get:
+      summary: Get all recipes for the authenticated user
+      description: Returns only recipes owned by the currently authenticated user.
+      operationId: getRecipes
+      tags:
+        - Recipes
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: List of recipes belonging to the authenticated user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recipe'
+        '401':
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    post:
+      summary: Create a recipe for the authenticated user
+      operationId: createRecipe
+      tags:
+        - Recipes
+      security:
+        - sessionCookie: []
+      responses:
+        '201':
+          description: Recipe created for the current user.
+        '400':
+          description: Invalid request payload.
+        '401':
+          description: Not authenticated.
+
+  /recipes/{id}:
+    get:
+      summary: Get a recipe by id for the authenticated user
+      operationId: getRecipeById
+      tags:
+        - Recipes
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Recipe found and owned by current user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'
+        '401':
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Recipe does not exist or is not owned by current user.
+
+    put:
+      summary: Update a recipe for the authenticated user
+      operationId: updateRecipe
+      tags:
+        - Recipes
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Recipe updated.
+        '401':
+          description: Not authenticated.
+        '404':
+          description: Recipe does not exist or is not owned by current user.
+
+    delete:
+      summary: Delete a recipe for the authenticated user
+      operationId: deleteRecipe
+      tags:
+        - Recipes
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Recipe deleted.
+        '401':
+          description: Not authenticated.
+        '404':
+          description: Recipe does not exist or is not owned by current user.
+
+  /recipes/extract-from-image:
+    post:
+      summary: Extract recipe fields from uploaded images
+      operationId: extractRecipeFromImage
+      tags:
+        - Recipes
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: Extraction completed.
+        '400':
+          description: Invalid file payload.
+        '401':
+          description: Not authenticated.
+
+  /weekly-plan:
+    get:
+      summary: Get the authenticated user's weekly plan
+      description: Returns the weekly plan for the currently authenticated user only.
+      operationId: getWeeklyPlan
+      tags:
+        - WeeklyPlan
+      security:
+        - sessionCookie: []
+      responses:
+        '200':
+          description: The authenticated user's weekly plan.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WeeklyPlan'
+        '401':
+          description: Not authenticated.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /weekly-plan/items:
+    post:
+      summary: Add a recipe to the authenticated user's weekly plan
+      operationId: addToWeeklyPlan
+      tags:
+        - WeeklyPlan
+      security:
+        - sessionCookie: []
+      responses:
+        '201':
+          description: Weekly plan item added.
+        '401':
+          description: Not authenticated.
+        '404':
+          description: Recipe not found for current user.
+
+  /weekly-plan/items/{id}:
+    delete:
+      summary: Remove an item from the authenticated user's weekly plan
+      operationId: removeFromWeeklyPlan
+      tags:
+        - WeeklyPlan
+      security:
+        - sessionCookie: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Weekly plan item removed.
+        '401':
+          description: Not authenticated.
+        '404':
+          description: Weekly plan item not found for current user.
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: wfd_session
+      description: |
+        HttpOnly session cookie containing a signed JWT.
+        Issued by POST /api/auth/google. Rolling 30-day expiration.
+
+  schemas:
+    GoogleSignInRequest:
+      type: object
+      required:
+        - credential
+      properties:
+        credential:
+          type: string
+          description: |
+            The JWT ID token returned by Google Identity Services
+            (the `credential` field from the GIS callback response).
+          example: "eyJhbGciOiJSUzI1NiIsImtpZCI6..."
+
+    AuthUser:
+      type: object
+      required:
+        - id
+        - email
+        - displayName
+      properties:
+        id:
+          type: integer
+          description: Internal user ID.
+          example: 42
+        email:
+          type: string
+          format: email
+          description: The user's Google-associated email address.
+          example: "jane.doe@gmail.com"
+        displayName:
+          type: string
+          description: The user's display name from their Google profile.
+          example: "Jane Doe"
+        avatarUrl:
+          type: string
+          format: uri
+          nullable: true
+          description: URL of the user's Google profile picture.
+          example: "https://lh3.googleusercontent.com/a/..."
+
+    Recipe:
+      type: object
+      description: A recipe belonging to the authenticated user (unchanged from v3).
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        ingredients:
+          type: string
+          nullable: true
+        preparation:
+          type: string
+          nullable: true
+        cookTimeMinutes:
+          type: integer
+          nullable: true
+
+    WeeklyPlan:
+      type: object
+      description: The authenticated user's weekly meal plan (unchanged structure).
+      properties:
+        id:
+          type: integer
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WeeklyPlanItem'
+
+    WeeklyPlanItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        recipeId:
+          type: integer
+        dayOfWeek:
+          type: string
+          enum: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+        mealType:
+          type: string
+          enum: [Breakfast, Lunch, Dinner]
+
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          example: "Invalid or expired Google credential."

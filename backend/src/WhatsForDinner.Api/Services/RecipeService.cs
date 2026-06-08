@@ -14,7 +14,7 @@ public class RecipeService : IRecipeService
         _context = context;
     }
 
-    public async Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(int userId = 1)
+    public async Task<IReadOnlyList<RecipeDto>> GetRecipesAsync(int userId)
     {
         var recipes = await _context.Recipes
             .Where(r => r.UserId == userId)
@@ -34,7 +34,7 @@ public class RecipeService : IRecipeService
         return recipes;
     }
 
-    public async Task<RecipeDto?> GetRecipeByIdAsync(int id, int userId = 1)
+    public async Task<RecipeDto?> GetRecipeByIdAsync(int id, int userId)
     {
         var recipe = await _context.Recipes
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
@@ -56,7 +56,7 @@ public class RecipeService : IRecipeService
         );
     }
 
-    public async Task<RecipeDto?> UpdateRecipeAsync(int id, RecipeUpdateRequest request, int userId = 1)
+    public async Task<RecipeDto?> UpdateRecipeAsync(int id, RecipeUpdateRequest request, int userId)
     {
         var recipe = await _context.Recipes
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);
@@ -87,7 +87,7 @@ public class RecipeService : IRecipeService
         );
     }
 
-    public async Task<RecipeDto> CreateRecipeAsync(RecipeCreateRequest request, int userId = 1)
+    public async Task<RecipeDto> CreateRecipeAsync(RecipeCreateRequest request, int userId)
     {
         var recipe = new Recipe
         {
@@ -116,7 +116,7 @@ public class RecipeService : IRecipeService
         );
     }
 
-    public async Task<bool> DeleteRecipeAsync(int id, int userId = 1)
+    public async Task<bool> DeleteRecipeAsync(int id, int userId)
     {
         var recipe = await _context.Recipes
             .FirstOrDefaultAsync(r => r.Id == id && r.UserId == userId);

@@ -1,5 +1,29 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/authStore'
+
+const authStore = useAuthStore()
+const router = useRouter()
+
+const initials = computed(() => {
+  if (!authStore.user?.displayName) {
+    return 'U'
+  }
+
+  return authStore.user.displayName
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase()
+})
+
+async function onSignOut() {
+  await authStore.logout()
+  await router.replace('/login')
+}
 </script>
 
 <template>
@@ -8,7 +32,7 @@ import { RouterLink, RouterView } from 'vue-router'
     <header class="app-header">
       <nav class="nav" aria-label="Main navigation">
         <RouterLink to="/" class="nav-brand">WhatsForDinner</RouterLink>
-        <ul class="nav-links" role="menubar">
+        <ul v-if="authStore.isAuthenticated" class="nav-links" role="menubar">
           <li role="none">
             <RouterLink to="/" role="menuitem">Weekly Plan</RouterLink>
           </li>
@@ -16,6 +40,15 @@ import { RouterLink, RouterView } from 'vue-router'
             <RouterLink to="/recipes" role="menuitem">Recipes</RouterLink>
           </li>
         </ul>
+        <div v-if="authStore.isAuthenticated" class="user-menu">
+          <button class="avatar-button" type="button" :aria-label="`Signed in as ${authStore.user?.displayName}`">
+            {{ initials }}
+          </button>
+          <div class="dropdown" role="menu">
+            <span class="user-name">{{ authStore.user?.displayName }}</span>
+            <button type="button" class="signout" @click="onSignOut">Sign out</button>
+          </div>
+        </div>
       </nav>
     </header>
     <main id="main-content" class="main-content" tabindex="-1">
@@ -42,7 +75,7 @@ import { RouterLink, RouterView } from 'vue-router'
   margin: 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: var(--spacing-md);
 }
 
 .nav-brand {
@@ -58,6 +91,7 @@ import { RouterLink, RouterView } from 'vue-router'
   list-style: none;
   margin: 0;
   padding: 0;
+  margin-left: auto;
 }
 
 .nav-links a {
@@ -77,6 +111,52 @@ import { RouterLink, RouterView } from 'vue-router'
 .main-content {
   flex: 1;
   padding: var(--spacing-lg);
+}
+
+.user-menu {
+  position: relative;
+}
+
+.avatar-button {
+  border: none;
+  border-radius: 999px;
+  width: 2.25rem;
+  height: 2.25rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: white;
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  display: none;
+  min-width: 180px;
+}
+
+.user-menu:hover .dropdown,
+.user-menu:focus-within .dropdown {
+  display: grid;
+  gap: var(--spacing-xs);
+}
+
+.user-name {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.signout {
+  border: none;
+  background: var(--color-error);
+  color: white;
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  cursor: pointer;
 }
 
 @media (max-width: 768px) {

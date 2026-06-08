@@ -33,14 +33,5 @@ public class WeeklyPlanConfiguration : IEntityTypeConfiguration<WeeklyPlan>
         builder.HasIndex(wp => wp.UserId)
             .IsUnique()
             .HasDatabaseName("uq_weekly_plan_user_id");
-
-        // Seed data - weekly plan for default user
-        builder.HasData(new WeeklyPlan
-        {
-            Id = 1,
-            UserId = 1,
-            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
-            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-        });
     }
 }

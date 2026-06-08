@@ -1,10 +1,21 @@
 import { test, expect } from '@playwright/test'
-import path from 'path'
+import { setupAuthenticatedSession } from './helpers/authSession'
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:5173'
 
+function createImageFixture(name: string) {
+  // Minimal JPEG header bytes are sufficient for upload validation in UI tests.
+  const jpegBytes = Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAP//////////////////////////////////////////////////////////////////////////////////////2wBDAf//////////////////////////////////////////////////////////////////////////////////////wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAABQb/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCeAAX/2Q==', 'base64')
+  return {
+    name,
+    mimeType: 'image/jpeg',
+    buffer: jpegBytes,
+  }
+}
+
 test.describe('Multi-Image Recipe Extraction', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthenticatedSession(page)
     await page.goto(`${BASE_URL}/recipes/new`)
     // Switch to Upload Image tab
     await page.click('button:has-text("Upload Image")')
@@ -15,8 +26,8 @@ test.describe('Multi-Image Recipe Extraction', () => {
 
     // Upload 2 images via the file input
     await fileInput.setInputFiles([
-      path.resolve(__dirname, '../../src/assets/test-image-1.jpg'),
-      path.resolve(__dirname, '../../src/assets/test-image-2.jpg'),
+      createImageFixture('test-image-1.jpg'),
+      createImageFixture('test-image-2.jpg'),
     ])
 
     // Verify thumbnails are shown
@@ -35,8 +46,8 @@ test.describe('Multi-Image Recipe Extraction', () => {
     const fileInput = page.locator('input[type="file"]')
 
     await fileInput.setInputFiles([
-      path.resolve(__dirname, '../../src/assets/test-image-1.jpg'),
-      path.resolve(__dirname, '../../src/assets/test-image-2.jpg'),
+      createImageFixture('test-image-1.jpg'),
+      createImageFixture('test-image-2.jpg'),
     ])
 
     await expect(page.locator('.thumbnail-item')).toHaveCount(2)
@@ -52,7 +63,7 @@ test.describe('Multi-Image Recipe Extraction', () => {
     const fileInput = page.locator('input[type="file"]')
 
     await fileInput.setInputFiles([
-      path.resolve(__dirname, '../../src/assets/test-image-1.jpg'),
+      createImageFixture('test-image-1.jpg'),
     ])
 
     await expect(page.locator('.thumbnail-item')).toHaveCount(1)

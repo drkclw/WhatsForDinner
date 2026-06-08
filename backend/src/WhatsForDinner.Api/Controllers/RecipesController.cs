@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WhatsForDinner.Api.Models.Dtos;
 using WhatsForDinner.Api.Services;
@@ -5,6 +7,7 @@ using WhatsForDinner.Api.Services;
 namespace WhatsForDinner.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/recipes")]
 public class RecipesController : ControllerBase
 {
@@ -24,7 +27,8 @@ public class RecipesController : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<RecipeDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<RecipeDto>>> GetRecipes()
     {
-        var recipes = await _recipeService.GetRecipesAsync();
+        var userId = GetCurrentUserId();
+        var recipes = await _recipeService.GetRecipesAsync(userId);
         return Ok(recipes);
     }
 
@@ -36,7 +40,8 @@ public class RecipesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<RecipeDto>> GetRecipe(int id)
     {
-        var recipe = await _recipeService.GetRecipeByIdAsync(id);
+        var userId = GetCurrentUserId();
+        var recipe = await _recipeService.GetRecipeByIdAsync(id, userId);
         
         if (recipe == null)
         {
@@ -54,7 +59,8 @@ public class RecipesController : ControllerBase
     [ProducesResponseType(typeof(ValidationErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RecipeDto>> CreateRecipe([FromBody] RecipeCreateRequest request)
     {
-        var recipe = await _recipeService.CreateRecipeAsync(request);
+        var userId = GetCurrentUserId();
+        var recipe = await _recipeService.CreateRecipeAsync(request, userId);
         return CreatedAtAction(nameof(GetRecipe), new { id = recipe.Id }, recipe);
     }
 
@@ -67,7 +73,8 @@ public class RecipesController : ControllerBase
     [ProducesResponseType(typeof(ValidationErrorResponse), StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RecipeDto>> UpdateRecipe(int id, [FromBody] RecipeUpdateRequest request)
     {
-        var recipe = await _recipeService.UpdateRecipeAsync(id, request);
+        var userId = GetCurrentUserId();
+        var recipe = await _recipeService.UpdateRecipeAsync(id, request, userId);
         
         if (recipe == null)
         {
@@ -85,7 +92,8 @@ public class RecipesController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> DeleteRecipe(int id)
     {
-        var deleted = await _recipeService.DeleteRecipeAsync(id);
+        var userId = GetCurrentUserId();
+        var deleted = await _recipeService.DeleteRecipeAsync(id, userId);
         
         if (!deleted)
         {
@@ -192,5 +200,16 @@ public class RecipesController : ControllerBase
                 data[8] == 0x57 && data[9] == 0x45 && data[10] == 0x42 && data[11] == 0x50,
             _ => false
         };
+    }
+
+    private int GetCurrentUserId()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (idClaim == null || !int.TryParse(idClaim, out var userId))
+        {
+            throw new UnauthorizedAccessException("Invalid user context.");
+        }
+
+        return userId;
     }
 }

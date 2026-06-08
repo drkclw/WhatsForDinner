@@ -6,10 +6,10 @@ interface Props {
   loadingMessage?: string
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false,
-  loadingMessage: 'Extracting recipe from image...'
-})
+const {
+  isLoading = false,
+  loadingMessage = 'Extracting recipe from image...'
+} = defineProps<Props>()
 
 const emit = defineEmits<{
   'files-changed': [files: File[]]

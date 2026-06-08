@@ -21,7 +21,12 @@ export const useWeeklyPlanStore = defineStore('weeklyPlan', () => {
       weeklyPlan.value = await weeklyPlanService.getWeeklyPlan()
     } catch (e) {
       if (e instanceof ApiClientError) {
-        error.value = e.message
+        if (e.statusCode === 401) {
+          weeklyPlan.value = null
+          error.value = 'Please sign in to load your weekly plan.'
+        } else {
+          error.value = e.message
+        }
       } else {
         error.value = 'Failed to load weekly plan'
       }

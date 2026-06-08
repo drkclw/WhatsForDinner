@@ -33,16 +33,23 @@ async function handleResponse<T>(response: Response): Promise<T> {
     return undefined as T
   }
   
+  console.log('API response content type:', response.headers.get('Content-Type'));
+  console.log('API content', await response.clone().text());
   return response.json()
 }
 
 export const apiClient = {
+  createJsonHeaders(): HeadersInit {
+    return {
+      'Content-Type': 'application/json'
+    }
+  },
+
   async get<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: this.createJsonHeaders(),
+      credentials: 'include'
     })
     return handleResponse<T>(response)
   },
@@ -50,9 +57,8 @@ export const apiClient = {
   async post<T, D = unknown>(endpoint: string, data: D): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: this.createJsonHeaders(),
+      credentials: 'include',
       body: JSON.stringify(data)
     })
     return handleResponse<T>(response)
@@ -61,9 +67,8 @@ export const apiClient = {
   async put<T, D = unknown>(endpoint: string, data: D): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: this.createJsonHeaders(),
+      credentials: 'include',
       body: JSON.stringify(data)
     })
     return handleResponse<T>(response)
@@ -72,9 +77,8 @@ export const apiClient = {
   async delete<T>(endpoint: string): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: this.createJsonHeaders(),
+      credentials: 'include'
     })
     return handleResponse<T>(response)
   },
@@ -82,6 +86,7 @@ export const apiClient = {
   async postFormData<T>(endpoint: string, formData: FormData): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       method: 'POST',
+      credentials: 'include',
       body: formData
     })
     return handleResponse<T>(response)

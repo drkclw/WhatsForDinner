@@ -1,5 +1,6 @@
 using System.Net;
 using FluentAssertions;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -37,6 +38,14 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
                     options.UseInMemoryDatabase(dbName);
                 });
 
+                services
+                    .AddAuthentication(options =>
+                    {
+                        options.DefaultAuthenticateScheme = TestAuthHandler.SchemeName;
+                        options.DefaultChallengeScheme = TestAuthHandler.SchemeName;
+                    })
+                    .AddScheme<AuthenticationSchemeOptions, TestAuthHandler>(TestAuthHandler.SchemeName, _ => { });
+
                 // Replace the image extractor with a fake
                 services.AddScoped<IRecipeImageExtractor, FakeRecipeImageExtractor>();
 
@@ -66,6 +75,7 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
     public async Task ExtractFromImage_ReturnsOk_WithSingleFile()
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, "1");
         using var content = CreateMultiFileContent(1);
 
         var response = await client.PostAsync("/api/recipes/extract-from-image", content);
@@ -77,6 +87,7 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
     public async Task ExtractFromImage_ReturnsOk_WithMultipleFiles()
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, "1");
         using var content = CreateMultiFileContent(3);
 
         var response = await client.PostAsync("/api/recipes/extract-from-image", content);
@@ -88,6 +99,7 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
     public async Task ExtractFromImage_ReturnsOk_WithFiveFiles()
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, "1");
         using var content = CreateMultiFileContent(5);
 
         var response = await client.PostAsync("/api/recipes/extract-from-image", content);
@@ -99,6 +111,7 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
     public async Task ExtractFromImage_ReturnsBadRequest_WhenNoFilesProvided()
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, "1");
         using var content = new MultipartFormDataContent();
 
         var response = await client.PostAsync("/api/recipes/extract-from-image", content);
@@ -110,6 +123,7 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
     public async Task ExtractFromImage_ReturnsBadRequest_WhenMoreThanFiveFiles()
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, "1");
         using var content = CreateMultiFileContent(6);
 
         var response = await client.PostAsync("/api/recipes/extract-from-image", content);
@@ -121,6 +135,7 @@ public class RecipeExtractionTests : IClassFixture<WebApplicationFactory<Program
     public async Task ExtractFromImage_ReturnsBadRequest_WhenUnsupportedFileType()
     {
         var client = _factory.CreateClient();
+        client.DefaultRequestHeaders.Add(TestAuthHandler.UserHeader, "1");
         using var content = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(CreateFakeJpeg());
         fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/pdf");

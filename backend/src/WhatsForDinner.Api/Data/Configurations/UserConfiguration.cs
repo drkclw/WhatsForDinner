@@ -15,15 +15,38 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Id)
             .HasColumnName("id");
 
-        builder.Property(u => u.Name)
-            .HasColumnName("name")
+        builder.Property(u => u.GoogleId)
+            .HasColumnName("google_id")
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(255);
+
+        builder.Property(u => u.Email)
+            .HasColumnName("email")
+            .IsRequired()
+            .HasMaxLength(254);
+
+        builder.Property(u => u.DisplayName)
+            .HasColumnName("display_name")
+            .IsRequired()
+            .HasMaxLength(200);
+
+        builder.Property(u => u.PictureUrl)
+            .HasColumnName("picture_url")
+            .HasMaxLength(2048);
 
         builder.Property(u => u.CreatedAt)
             .HasColumnName("created_at")
             .IsRequired()
             .HasDefaultValueSql("NOW()");
+
+        builder.Property(u => u.LastLoginAt)
+            .HasColumnName("last_login_at")
+            .IsRequired()
+            .HasDefaultValueSql("NOW()");
+
+        builder.HasIndex(u => u.GoogleId)
+            .IsUnique()
+            .HasDatabaseName("ux_users_google_id");
 
         // Relationships
         builder.HasMany(u => u.Recipes)
@@ -35,13 +58,5 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(wp => wp.User)
             .HasForeignKey<WeeklyPlan>(wp => wp.UserId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        // Seed data - single predefined user for MVP
-        builder.HasData(new User
-        {
-            Id = 1,
-            Name = "Default User",
-            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)
-        });
     }
 }
