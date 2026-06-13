@@ -1,0 +1,35 @@
+using './main.bicep'
+
+param environmentName = 'prod'
+param location = 'eastus2'
+param resourcePrefix = 'wfd'
+param staticWebAppName = 'wfd-prod-web'
+param appServicePlanName = 'wfd-prod-plan'
+param appServiceName = 'wfd-prod-api'
+param postgresServerName = 'wfd-prod-pg'
+param postgresDatabaseName = 'whatsfordinner'
+param keyVaultName = 'wfd-prod-kv'
+param appServicePlanSkuName = 'B1'
+param appServicePlanSkuTier = 'Basic'
+param staticWebAppSku = 'Free'
+param postgresSkuName = 'Standard_B1ms'
+param postgresSkuTier = 'Burstable'
+param postgresVersion = '16'
+param postgresAdministratorLogin = 'wfdadmin'
+param postgresAdministratorPassword = '__SET_IN_SECURE_PARAMETERS__'
+param postgresStorageSizeGb = 32
+param postgresBackupRetentionDays = 7
+param postgresFirewallStartIp = '0.0.0.0'
+param postgresFirewallEndIp = '255.255.255.255'
+param frontendAllowedOrigin = 'https://example.azurestaticapps.net'
+param googleClientId = ''
+param jwtSigningKey = '__SET_IN_SECURE_PARAMETERS__'
+param openAiApiKey = '__SET_IN_SECURE_PARAMETERS__'
+param openAiEndpoint = ''
+param openAiModel = 'gpt-4o-mini'
+param openAiTimeoutSeconds = 90
+param tags = {
+  application: 'WhatsForDinner'
+  environment: 'prod'
+  managedBy: 'bicep'
+}

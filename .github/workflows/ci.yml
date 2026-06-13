@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'infra/**'
+      - 'scripts/**'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/**'
+      - 'backend/**'
+      - 'frontend/**'
+      - 'infra/**'
+      - 'scripts/**'
+
+jobs:
+  validate-infra:
+    name: Validate Infrastructure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Lint GitHub Actions workflows
+        uses: rhysd/actionlint@v1
+
+      - name: Install PowerShell Script Analyzer
+        shell: pwsh
+        run: |
+          Set-PSRepository PSGallery -InstallationPolicy Trusted
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force
+
+      - name: Lint PowerShell validation scripts
+        shell: pwsh
+        run: |
+          $issues = Invoke-ScriptAnalyzer -Path scripts/validate-no-openai.ps1 -Recurse
+          if ($issues) {
+            $issues | Format-Table -AutoSize | Out-String | Write-Host
+            throw 'PowerShell lint validation failed.'
+          }
+
+      - name: Validate Bicep formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          while IFS= read -r file; do
+            formatted="$(az bicep format --file "$file" --stdout)"
+            if ! diff -u "$file" <(printf '%s\n' "$formatted"); then
+              echo "Bicep format check failed for $file"
+              exit 1
+            fi
+          done < <(find infra -name '*.bicep' -print)
+
+      - name: Lint Bicep templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep lint --file infra/main.bicep
+
+      - name: Build Bicep templates
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep build --file infra/main.bicep
+
+      - name: Run OpenAI scope guard
+        shell: pwsh
+        run: ./scripts/validate-no-openai.ps1
+
+      - name: Azure login for what-if
+        if: ${{ github.event_name == 'push' && vars.AZURE_CLIENT_ID != '' && vars.AZURE_TENANT_ID != '' && vars.AZURE_SUBSCRIPTION_ID != '' && vars.AZURE_RESOURCE_GROUP != '' }}
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Run Bicep what-if
+        if: ${{ github.event_name == 'push' && vars.AZURE_CLIENT_ID != '' && vars.AZURE_TENANT_ID != '' && vars.AZURE_SUBSCRIPTION_ID != '' && vars.AZURE_RESOURCE_GROUP != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          az deployment group what-if \
+            --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+            --template-file infra/main.bicep \
+            --parameters infra/main.bicepparam
+
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore backend test dependencies
+        run: dotnet restore backend/tests/WhatsForDinner.Api.Tests/WhatsForDinner.Api.Tests.csproj
+
+      - name: Run backend tests
+        run: dotnet test backend/tests/WhatsForDinner.Api.Tests/WhatsForDinner.Api.Tests.csproj --configuration Release --results-directory backend/tests/WhatsForDinner.Api.Tests/TestResults --collect:"XPlat Code Coverage"
+
+      - name: Enforce backend coverage threshold
+        shell: pwsh
+        run: |
+          $coverageFile = Get-ChildItem 'backend/tests/WhatsForDinner.Api.Tests/TestResults' -Recurse -Filter 'coverage.cobertura.xml' | Select-Object -First 1
+          if (-not $coverageFile) {
+            throw 'Backend coverage file was not produced.'
+          }
+
+          [xml]$coverage = Get-Content $coverageFile.FullName
+          $lineRate = [double]$coverage.coverage.'line-rate'
+          $percent = [math]::Round($lineRate * 100, 2)
+
+          "Backend line coverage: $percent%" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
+
+          if ($lineRate -lt 0.8) {
+            throw "Backend critical-path coverage gate failed: $percent% < 80%."
+          }
+
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Run frontend unit tests
+        run: npm run test
+
+      - name: Run frontend type check
+        run: npm run type-check
+
+      - name: Validate frontend critical path build
+        run: npm run build
