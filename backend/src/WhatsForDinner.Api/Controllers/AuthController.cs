@@ -84,7 +84,7 @@ public class AuthController : ControllerBase
 
     [Authorize]
     [HttpPost("logout")]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public IActionResult Logout()
     {
         Response.Cookies.Delete(SessionCookieName, new CookieOptions
@@ -95,7 +95,7 @@ public class AuthController : ControllerBase
             Path = "/"
         });
 
-        return Ok();
+        return NoContent();
     }
 
     private int? GetCurrentUserId()
