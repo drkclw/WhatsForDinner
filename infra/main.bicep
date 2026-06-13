@@ -105,11 +105,14 @@ param openAiTimeoutSeconds int = 90
 @description('Common tags applied to all resources.')
 param tags object = {}
 
-var effectiveTags = union({
-  application: 'WhatsForDinner'
-  environment: environmentName
-  managedBy: 'bicep'
-}, tags)
+var effectiveTags = union(
+  {
+    application: 'WhatsForDinner'
+    environment: environmentName
+    managedBy: 'bicep'
+  },
+  tags
+)
 
 module keyVault './modules/key-vault.bicep' = {
   name: 'keyvault-${environmentName}'
