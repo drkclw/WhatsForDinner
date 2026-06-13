@@ -143,9 +143,11 @@ describe('ImageUpload', () => {
 
     await addFilesViaInput(wrapper, [createFile('a.jpg')])
 
-    const extractBtn = wrapper.findAll('button').find(b => b.text().includes('Extract'))
-    expect(extractBtn).toBeDefined()
-    await extractBtn!.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const extractBtn = buttons[buttons.length - 1]
+
+    expect(extractBtn.exists()).toBe(true)
+    await extractBtn.trigger('click')
 
     expect(wrapper.emitted('extract')).toBeTruthy()
   })

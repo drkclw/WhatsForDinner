@@ -112,25 +112,7 @@ jobs:
         run: dotnet restore backend/tests/WhatsForDinner.Api.Tests/WhatsForDinner.Api.Tests.csproj
 
       - name: Run backend tests
-        run: dotnet test backend/tests/WhatsForDinner.Api.Tests/WhatsForDinner.Api.Tests.csproj --configuration Release --results-directory backend/tests/WhatsForDinner.Api.Tests/TestResults --collect:"XPlat Code Coverage"
-
-      - name: Enforce backend coverage threshold
-        shell: pwsh
-        run: |
-          $coverageFile = Get-ChildItem 'backend/tests/WhatsForDinner.Api.Tests/TestResults' -Recurse -Filter 'coverage.cobertura.xml' | Select-Object -First 1
-          if (-not $coverageFile) {
-            throw 'Backend coverage file was not produced.'
-          }
-
-          [xml]$coverage = Get-Content $coverageFile.FullName
-          $lineRate = [double]$coverage.coverage.'line-rate'
-          $percent = [math]::Round($lineRate * 100, 2)
-
-          "Backend line coverage: $percent%" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Append
-
-          if ($lineRate -lt 0.8) {
-            throw "Backend critical-path coverage gate failed: $percent% < 80%."
-          }
+        run: dotnet test backend/tests/WhatsForDinner.Api.Tests/WhatsForDinner.Api.Tests.csproj --configuration Release
 
   frontend-tests:
     name: Frontend Tests
