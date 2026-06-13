@@ -1,9 +1,11 @@
 import { test, expect } from '@playwright/test'
+import { setupAuthenticatedSession } from './helpers/authSession'
 
 const BASE_URL = process.env.E2E_BASE_URL ?? 'http://localhost:5173'
 
 test.describe('Add Recipe Flows', () => {
   test.beforeEach(async ({ page }) => {
+    await setupAuthenticatedSession(page)
     await page.goto(BASE_URL)
   })
 

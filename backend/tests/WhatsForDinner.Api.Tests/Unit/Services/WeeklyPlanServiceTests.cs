@@ -17,7 +17,15 @@ public class WeeklyPlanServiceTests
         var context = new ApplicationDbContext(options);
         
         // Seed test data
-        var user = new User { Id = 1, Name = "Test User", CreatedAt = DateTime.UtcNow };
+        var user = new User
+        {
+            Id = 1,
+            GoogleId = "google-user-1",
+            Email = "user1@example.com",
+            DisplayName = "Test User",
+            CreatedAt = DateTime.UtcNow,
+            LastLoginAt = DateTime.UtcNow
+        };
         context.Users.Add(user);
 
         var recipe1 = new Recipe { Id = 1, UserId = 1, Name = "Test Recipe 1", CookTimeMinutes = 30 };

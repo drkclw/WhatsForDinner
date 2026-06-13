@@ -78,63 +78,6 @@ namespace WhatsForDinner.Api.Migrations
                         .HasDatabaseName("ix_recipes_user_id");
 
                     b.ToTable("recipes", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CookTimeMinutes = 45,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Classic Italian pasta with meat sauce",
-                            Ingredients = "Spaghetti\nGround beef\nTomato sauce\nOnion\nGarlic\nOlive oil\nSalt\nPepper\nParmesan",
-                            Name = "Spaghetti Bolognese",
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 2,
-                            CookTimeMinutes = 25,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Fresh salad with grilled chicken breast",
-                            Ingredients = "Chicken breast\nMixed greens\nCherry tomatoes\nCucumber\nRed onion\nOlive oil\nLemon juice",
-                            Name = "Grilled Chicken Salad",
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 3,
-                            CookTimeMinutes = 20,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Quick and healthy Asian-inspired dish",
-                            Ingredients = "Broccoli\nBell peppers\nCarrots\nSnap peas\nSoy sauce\nGarlic\nGinger\nSesame oil\nRice",
-                            Name = "Vegetable Stir Fry",
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 4,
-                            CookTimeMinutes = 30,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Mexican-style tacos with seasoned beef",
-                            Ingredients = "Ground beef\nTaco shells\nLettuce\nTomatoes\nCheese\nSour cream\nTaco seasoning",
-                            Name = "Beef Tacos",
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = 1
-                        },
-                        new
-                        {
-                            Id = 5,
-                            CookTimeMinutes = 25,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Description = "Simple Italian pizza with fresh ingredients",
-                            Ingredients = "Pizza dough\nTomato sauce\nFresh mozzarella\nBasil\nOlive oil",
-                            Name = "Margherita Pizza",
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("WhatsForDinner.Api.Models.User", b =>
@@ -152,23 +95,42 @@ namespace WhatsForDinner.Api.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("DisplayName")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)")
-                        .HasColumnName("name");
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("display_name");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("character varying(254)")
+                        .HasColumnName("email");
+
+                    b.Property<string>("GoogleId")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("google_id");
+
+                    b.Property<DateTime>("LastLoginAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("PictureUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)")
+                        .HasColumnName("picture_url");
 
                     b.HasKey("Id");
 
-                    b.ToTable("users", (string)null);
+                    b.HasIndex("GoogleId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_users_google_id");
 
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            Name = "Default User"
-                        });
+                    b.ToTable("users", (string)null);
                 });
 
             modelBuilder.Entity("WhatsForDinner.Api.Models.WeeklyPlan", b =>
@@ -203,15 +165,6 @@ namespace WhatsForDinner.Api.Migrations
                         .HasDatabaseName("uq_weekly_plan_user_id");
 
                     b.ToTable("weekly_plans", (string)null);
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UpdatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
-                            UserId = 1
-                        });
                 });
 
             modelBuilder.Entity("WhatsForDinner.Api.Models.WeeklyPlanItem", b =>

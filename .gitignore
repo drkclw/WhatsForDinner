@@ -22,6 +22,7 @@ yarn-error.log*
 
 # Environment files
 .env
+.env*
 .env.local
 .env.*.local
 
@@ -41,6 +42,12 @@ coverage/
 
 # PostgreSQL
 *.sql.bak
+
+# TypeScript build artifacts
+*.tsbuildinfo
+
+# Playwright test artifacts
+test-results/
 
 # Misc
 *.tmp

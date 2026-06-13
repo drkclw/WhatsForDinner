@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WhatsForDinner.Api.Models.Dtos;
 using WhatsForDinner.Api.Services;
@@ -5,6 +7,7 @@ using WhatsForDinner.Api.Services;
 namespace WhatsForDinner.Api.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api/weekly-plan")]
 public class WeeklyPlanController : ControllerBase
 {
@@ -22,7 +25,8 @@ public class WeeklyPlanController : ControllerBase
     [ProducesResponseType(typeof(WeeklyPlanDto), StatusCodes.Status200OK)]
     public async Task<ActionResult<WeeklyPlanDto>> GetWeeklyPlan()
     {
-        var weeklyPlan = await _weeklyPlanService.GetWeeklyPlanAsync();
+        var userId = GetCurrentUserId();
+        var weeklyPlan = await _weeklyPlanService.GetWeeklyPlanAsync(userId);
         
         if (weeklyPlan == null)
         {
@@ -41,7 +45,8 @@ public class WeeklyPlanController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<WeeklyPlanItemDto>> AddToWeeklyPlan([FromBody] AddToWeeklyPlanRequest request)
     {
-        var item = await _weeklyPlanService.AddRecipeToWeeklyPlanAsync(request.RecipeId);
+        var userId = GetCurrentUserId();
+        var item = await _weeklyPlanService.AddRecipeToWeeklyPlanAsync(request.RecipeId, userId);
         
         if (item == null)
         {
@@ -59,7 +64,8 @@ public class WeeklyPlanController : ControllerBase
     [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status404NotFound)]
     public async Task<IActionResult> RemoveFromWeeklyPlan(int id)
     {
-        var result = await _weeklyPlanService.RemoveFromWeeklyPlanAsync(id);
+        var userId = GetCurrentUserId();
+        var result = await _weeklyPlanService.RemoveFromWeeklyPlanAsync(id, userId);
         
         if (!result)
         {
@@ -67,5 +73,16 @@ public class WeeklyPlanController : ControllerBase
         }
         
         return NoContent();
+    }
+
+    private int GetCurrentUserId()
+    {
+        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (idClaim == null || !int.TryParse(idClaim, out var userId))
+        {
+            throw new UnauthorizedAccessException("Invalid user context.");
+        }
+
+        return userId;
     }
 }

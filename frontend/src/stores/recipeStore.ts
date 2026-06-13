@@ -22,7 +22,13 @@ export const useRecipeStore = defineStore('recipes', () => {
       recipes.value = await recipeService.getRecipes()
     } catch (e) {
       if (e instanceof ApiClientError) {
-        error.value = e.message
+        if (e.statusCode === 401) {
+          recipes.value = []
+          currentRecipe.value = null
+          error.value = 'Please sign in to load your recipes.'
+        } else {
+          error.value = e.message
+        }
       } else {
         error.value = 'Failed to load recipes'
       }
@@ -39,7 +45,12 @@ export const useRecipeStore = defineStore('recipes', () => {
       currentRecipe.value = await recipeService.getRecipeById(id)
     } catch (e) {
       if (e instanceof ApiClientError) {
-        error.value = e.message
+        if (e.statusCode === 401) {
+          currentRecipe.value = null
+          error.value = 'Please sign in to view this recipe.'
+        } else {
+          error.value = e.message
+        }
       } else {
         error.value = 'Failed to load recipe'
       }

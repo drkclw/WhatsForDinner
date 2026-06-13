@@ -9,9 +9,7 @@ interface Props {
   isLoading?: boolean
 }
 
-const props = withDefaults(defineProps<Props>(), {
-  isLoading: false
-})
+const { recipes, isLoading = false } = defineProps<Props>()
 
 const emit = defineEmits<{
   select: [recipeId: number]

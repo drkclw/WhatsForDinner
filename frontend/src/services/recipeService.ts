@@ -1,25 +1,54 @@
 import { apiClient } from './apiClient'
+import { ApiClientError } from './apiClient'
 import type { Recipe, RecipeUpdateRequest, RecipeCreateRequest, RecipeImageExtractResult } from '@/types/Recipe'
+
+function rethrowWithAuthContext(error: unknown): never {
+  if (error instanceof ApiClientError && error.statusCode === 401) {
+    throw new ApiClientError('Authentication required', 401, error.data)
+  }
+
+  throw error
+}
 
 export const recipeService = {
   async getRecipes(): Promise<Recipe[]> {
-    return apiClient.get<Recipe[]>('/recipes')
+    try {
+      return await apiClient.get<Recipe[]>('/recipes')
+    } catch (error) {
+      rethrowWithAuthContext(error)
+    }
   },
 
   async getRecipeById(id: number): Promise<Recipe> {
-    return apiClient.get<Recipe>(`/recipes/${id}`)
+    try {
+      return await apiClient.get<Recipe>(`/recipes/${id}`)
+    } catch (error) {
+      rethrowWithAuthContext(error)
+    }
   },
 
   async updateRecipe(id: number, request: RecipeUpdateRequest): Promise<Recipe> {
-    return apiClient.put<Recipe, RecipeUpdateRequest>(`/recipes/${id}`, request)
+    try {
+      return await apiClient.put<Recipe, RecipeUpdateRequest>(`/recipes/${id}`, request)
+    } catch (error) {
+      rethrowWithAuthContext(error)
+    }
   },
 
   async createRecipe(request: RecipeCreateRequest): Promise<Recipe> {
-    return apiClient.post<Recipe, RecipeCreateRequest>('/recipes', request)
+    try {
+      return await apiClient.post<Recipe, RecipeCreateRequest>('/recipes', request)
+    } catch (error) {
+      rethrowWithAuthContext(error)
+    }
   },
 
   async deleteRecipe(id: number): Promise<void> {
-    return apiClient.delete<void>(`/recipes/${id}`)
+    try {
+      return await apiClient.delete<void>(`/recipes/${id}`)
+    } catch (error) {
+      rethrowWithAuthContext(error)
+    }
   },
 
   async extractFromImage(files: File[]): Promise<RecipeImageExtractResult> {
@@ -27,6 +56,10 @@ export const recipeService = {
     for (const file of files) {
       formData.append('files', file)
     }
-    return apiClient.postFormData<RecipeImageExtractResult>('/recipes/extract-from-image', formData)
+    try {
+      return await apiClient.postFormData<RecipeImageExtractResult>('/recipes/extract-from-image', formData)
+    } catch (error) {
+      rethrowWithAuthContext(error)
+    }
   }
 }

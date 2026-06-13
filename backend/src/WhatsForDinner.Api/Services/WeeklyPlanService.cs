@@ -14,7 +14,7 @@ public class WeeklyPlanService : IWeeklyPlanService
         _context = context;
     }
 
-    public async Task<WeeklyPlanDto?> GetWeeklyPlanAsync(int userId = 1)
+    public async Task<WeeklyPlanDto?> GetWeeklyPlanAsync(int userId)
     {
         var weeklyPlan = await _context.WeeklyPlans
             .Include(wp => wp.Items)
@@ -29,7 +29,7 @@ public class WeeklyPlanService : IWeeklyPlanService
         return MapToDto(weeklyPlan);
     }
 
-    public async Task<WeeklyPlanItemDto?> AddRecipeToWeeklyPlanAsync(int recipeId, int userId = 1)
+    public async Task<WeeklyPlanItemDto?> AddRecipeToWeeklyPlanAsync(int recipeId, int userId)
     {
         var weeklyPlan = await _context.WeeklyPlans
             .FirstOrDefaultAsync(wp => wp.UserId == userId);
@@ -63,7 +63,7 @@ public class WeeklyPlanService : IWeeklyPlanService
         return MapItemToDto(item);
     }
 
-    public async Task<bool> RemoveFromWeeklyPlanAsync(int weeklyPlanItemId, int userId = 1)
+    public async Task<bool> RemoveFromWeeklyPlanAsync(int weeklyPlanItemId, int userId)
     {
         var item = await _context.WeeklyPlanItems
             .Include(i => i.WeeklyPlan)
