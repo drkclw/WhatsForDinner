@@ -43,6 +43,9 @@ coverage/
 # PostgreSQL
 *.sql.bak
 
+# TypeScript build artifacts
+*.tsbuildinfo
+
 # Misc
 *.tmp
 *.temp
