@@ -14,11 +14,14 @@ param keyVaultName string
 param keyVaultUri string
 param tags object = {}
 
-var effectiveTags = union({
-  application: 'WhatsForDinner'
-  environment: environmentName
-  managedBy: 'bicep'
-}, tags)
+var effectiveTags = union(
+  {
+    application: 'WhatsForDinner'
+    environment: environmentName
+    managedBy: 'bicep'
+  },
+  tags
+)
 
 output deploymentEnvironment object = {
   name: environmentName
