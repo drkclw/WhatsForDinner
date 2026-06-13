@@ -90,14 +90,13 @@ paths:
       security:
         - sessionCookie: []
       responses:
-        '200':
+        '204':
           description: Signed out successfully. Session cookie cleared.
           headers:
             Set-Cookie:
               description: Session cookie cleared (Max-Age=0).
               schema:
                 type: string
-
   /recipes:
     get:
       summary: Get all recipes for the authenticated user
