@@ -68,6 +68,12 @@ jobs:
           set -euo pipefail
           az bicep build --file infra/main.bicep
 
+      - name: Build Bicep parameter file
+        shell: bash
+        run: |
+          set -euo pipefail
+          az bicep build-params --file infra/main.bicepparam
+
       - name: Run OpenAI scope guard
         shell: pwsh
         run: ./scripts/validate-no-openai.ps1
