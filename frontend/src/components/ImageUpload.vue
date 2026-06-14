@@ -11,7 +11,10 @@ const props = withDefaults(defineProps<Props>(), {
   loadingMessage: 'Extracting recipe from image...'
 })
 
-const emit = defineEmits(['files-changed', 'extract'])
+const emit = defineEmits<{
+  (e: 'files-changed', files: File[]): void
+  (e: 'extract'): void
+}>()
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILE_COUNT = 5
