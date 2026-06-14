@@ -16,9 +16,13 @@ const emit = defineEmits<{
   'extract': []
 }>()
 
-const maxFileSize = 10 * 1024 * 1024 // 10 MB
-const maxFileCount = 5
-const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
+const MAX_FILE_COUNT = 5
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+const maxFileSize = MAX_FILE_SIZE
+const maxFileCount = MAX_FILE_COUNT
+const allowedTypes = ALLOWED_TYPES
 
 interface UploadedFile {
   file: File
