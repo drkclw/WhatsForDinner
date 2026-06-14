@@ -6,15 +6,12 @@ interface Props {
   loadingMessage?: string
 }
 
-const {
-  isLoading = false,
-  loadingMessage = 'Extracting recipe from image...'
-} = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isLoading: false,
+  loadingMessage: 'Extracting recipe from image...'
+})
 
-const emit = defineEmits<{
-  (e: 'files-changed', files: File[]): void
-  (e: 'extract'): void
-}>()
+const emit = defineEmits(['files-changed', 'extract'])
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILE_COUNT = 5
@@ -139,9 +136,9 @@ onUnmounted(() => {
 <template>
   <div class="image-upload">
     <!-- Loading state -->
-    <div v-if="isLoading" class="upload-loading" role="status">
+    <div v-if="props.isLoading" class="upload-loading" role="status">
       <div class="spinner" aria-hidden="true"></div>
-      <span aria-live="polite">{{ loadingMessage }}</span>
+      <span aria-live="polite">{{ props.loadingMessage }}</span>
     </div>
 
     <template v-else>
