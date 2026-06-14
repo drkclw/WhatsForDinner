@@ -12,8 +12,8 @@ const {
 } = defineProps<Props>()
 
 const emit = defineEmits<{
-  'files-changed': [files: File[]]
-  'extract': []
+  (e: 'files-changed', files: File[]): void
+  (e: 'extract'): void
 }>()
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
