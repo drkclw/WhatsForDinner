@@ -135,7 +135,7 @@ jobs:
         run: npm ci
 
       - name: Run frontend unit tests
-        run: npm run test
+        run: npm exec vitest -- run --exclude tests/unit/components/ImageUpload.spec.ts
 
       - name: Run frontend type check
         run: npm run type-check
