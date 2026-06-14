@@ -134,6 +134,7 @@ describe('ImageUpload', () => {
     await addFilesViaInput(wrapper, [createFile('a.jpg'), createFile('b.jpg')])
 
     const removeButtons = wrapper.findAll('.thumbnail-remove')
+    expect(removeButtons).toHaveLength(2)
     expect(removeButtons[0].attributes('aria-label')).toBe('Remove image 1')
     expect(removeButtons[1].attributes('aria-label')).toBe('Remove image 2')
   })
