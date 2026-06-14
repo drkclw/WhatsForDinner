@@ -6,19 +6,23 @@ interface Props {
   loadingMessage?: string
 }
 
-const {
-  isLoading = false,
-  loadingMessage = 'Extracting recipe from image...'
-} = defineProps<Props>()
+const props = withDefaults(defineProps<Props>(), {
+  isLoading: false,
+  loadingMessage: 'Extracting recipe from image...'
+})
 
 const emit = defineEmits<{
-  'files-changed': [files: File[]]
-  'extract': []
+  (e: 'files-changed', files: File[]): void
+  (e: 'extract'): void
 }>()
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 const MAX_FILE_COUNT = 5
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+
+const maxFileSize = MAX_FILE_SIZE
+const maxFileCount = MAX_FILE_COUNT
+const allowedTypes = ALLOWED_TYPES
 
 interface UploadedFile {
   file: File
@@ -31,10 +35,10 @@ const isDragOver = ref(false)
 const fileInputRef = ref<HTMLInputElement | null>(null)
 
 function validateFile(file: File): string | null {
-  if (!ALLOWED_TYPES.includes(file.type)) {
+  if (!allowedTypes.includes(file.type)) {
     return `"${file.name}" is not a supported format. Please upload JPEG, PNG, or WebP images.`
   }
-  if (file.size > MAX_FILE_SIZE) {
+  if (file.size > maxFileSize) {
     return `"${file.name}" is too large. Maximum size is 10 MB per image.`
   }
   return null
@@ -44,14 +48,14 @@ function addFiles(newFiles: FileList | File[]) {
   errorMessage.value = null
 
   const filesToAdd = Array.from(newFiles)
-  const remainingSlots = MAX_FILE_COUNT - uploadedFiles.value.length
+  const remainingSlots = maxFileCount - uploadedFiles.value.length
 
   if (filesToAdd.length > remainingSlots) {
     if (remainingSlots === 0) {
-      errorMessage.value = `Maximum of ${MAX_FILE_COUNT} images allowed. Remove an image to add more.`
+      errorMessage.value = `Maximum of ${maxFileCount} images allowed. Remove an image to add more.`
       return
     }
-    errorMessage.value = `Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} can be added (max ${MAX_FILE_COUNT}).`
+    errorMessage.value = `Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} can be added (max ${maxFileCount}).`
     return
   }
 
@@ -138,9 +142,9 @@ onUnmounted(() => {
 <template>
   <div class="image-upload">
     <!-- Loading state -->
-    <div v-if="isLoading" class="upload-loading" role="status">
+    <div v-if="props.isLoading" class="upload-loading" role="status">
       <div class="spinner" aria-hidden="true"></div>
-      <span aria-live="polite">{{ loadingMessage }}</span>
+      <span aria-live="polite">{{ props.loadingMessage }}</span>
     </div>
 
     <template v-else>
@@ -172,7 +176,7 @@ onUnmounted(() => {
 
         <div class="upload-actions">
           <button
-            v-if="uploadedFiles.length < MAX_FILE_COUNT"
+            v-if="uploadedFiles.length < maxFileCount"
             type="button"
             class="btn btn-secondary btn-sm"
             @click="triggerFileInput"
@@ -209,7 +213,7 @@ onUnmounted(() => {
           <p class="upload-text">
             <strong>Click to upload</strong> or drag and drop
           </p>
-          <p class="upload-hint">JPEG, PNG, or WebP (max 10 MB each, up to 5 images)</p>
+          <p class="upload-hint">JPEG, PNG, or WebP (max ${maxFileSize / (1024 * 1024)} MB each, up to ${maxFileCount} images)</p>
         </div>
       </div>
     </template>
@@ -220,7 +224,7 @@ onUnmounted(() => {
       accept="image/jpeg,image/png,image/webp"
       multiple
       class="file-input"
-      aria-label="Upload recipe images (JPEG, PNG, or WebP, max 10 MB each)"
+      aria-label="Upload recipe images (JPEG, PNG, or WebP, max ${maxFileSize / (1024 * 1024)} MB each, up to ${maxFileCount} images)"
       @change="handleFileChange"
     />
 

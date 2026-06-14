@@ -134,6 +134,7 @@ describe('ImageUpload', () => {
     await addFilesViaInput(wrapper, [createFile('a.jpg'), createFile('b.jpg')])
 
     const removeButtons = wrapper.findAll('.thumbnail-remove')
+    expect(removeButtons).toHaveLength(2)
     expect(removeButtons[0].attributes('aria-label')).toBe('Remove image 1')
     expect(removeButtons[1].attributes('aria-label')).toBe('Remove image 2')
   })
@@ -143,9 +144,11 @@ describe('ImageUpload', () => {
 
     await addFilesViaInput(wrapper, [createFile('a.jpg')])
 
-    const extractBtn = wrapper.findAll('button').find(b => b.text().includes('Extract'))
-    expect(extractBtn).toBeDefined()
-    await extractBtn!.trigger('click')
+    const buttons = wrapper.findAll('button')
+    const extractBtn = buttons[buttons.length - 1]
+
+    expect(extractBtn.exists()).toBe(true)
+    await extractBtn.trigger('click')
 
     expect(wrapper.emitted('extract')).toBeTruthy()
   })
